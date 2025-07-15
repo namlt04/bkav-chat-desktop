@@ -1,0 +1,12 @@
+#pragma once
+
+#define WM_API_LOGIN (WM_USER + 51)
+#define WM_API_REGISTER (WM_USER + 50)
+#define WM_API_FRIEND (WM_USER + 52)
+#define WM_API_SEND (WM_USER + 53)
+#define WM_RESPONSE_ALL_MSG (WM_USER + 100)
+#define WM_RESPONSE_LAST_MSG (WM_USER + 101)
+#define WM_INITDATA (WM_USER + 200)
+
+
+
