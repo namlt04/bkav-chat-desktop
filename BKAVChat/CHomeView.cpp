@@ -232,6 +232,11 @@ LRESULT CHomeView::OnResponseFriend(WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+void CHomeView::OnClose()
+{
+	CDialogEx::OnClose(); 
+	AfxGetApp()->m_pMainWnd = nullptr;
+}
 BEGIN_MESSAGE_MAP(CHomeView, CDialogEx)
 	ON_LBN_SELCHANGE(1305, &CHomeView::OnSelChangeListFriend)
 	ON_MESSAGE(WM_API_FRIEND, &CHomeView::OnResponseFriend)

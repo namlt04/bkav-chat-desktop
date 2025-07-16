@@ -13,6 +13,8 @@
 #define IDD_CHATVIEW                    131
 #define IDI_ICON1                       142
 #define IDI_AVATAR                      142
+#define IDD_DIALOG1                     143
+#define IDD_EMOJIPICKER                 143
 #define IDC_CHECK                       1000
 #define IDC_USERNAME_SIV                1001
 #define IDC_PASSWORD_SIV                1002
@@ -33,7 +35,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        143
+#define _APS_NEXT_RESOURCE_VALUE        145
 #define _APS_NEXT_COMMAND_VALUE         32771
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101

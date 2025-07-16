@@ -189,6 +189,7 @@
     <ClInclude Include="CalcHelper.h" />
     <ClInclude Include="CCButton.h" />
     <ClInclude Include="CChatView.h" />
+    <ClInclude Include="CEmojiPicker.h" />
     <ClInclude Include="CHomeView.h" />
     <ClInclude Include="CListFriend.h" />
     <ClInclude Include="CListMessage.h" />
@@ -216,6 +217,7 @@
     <ClCompile Include="CalcHelper.cpp" />
     <ClCompile Include="CCButton.cpp" />
     <ClCompile Include="CChatView.cpp" />
+    <ClCompile Include="CEmojiPicker.cpp" />
     <ClCompile Include="CHomeView.cpp" />
     <ClCompile Include="CListFriend.cpp" />
     <ClCompile Include="CListMessage.cpp" />

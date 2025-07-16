@@ -50,12 +50,12 @@ BOOL CChatView::OnInitDialog()
 	
 	input.Create(WS_CHILD | WS_VISIBLE, inputRect, this, 1402);
 	CRect sendRect(clientRect.right - 200, rect.bottom, clientRect.right - 150, clientRect.bottom); 
-	CRect emoijRect(clientRect.right - 150, rect.bottom, clientRect.right - 100, clientRect.bottom); 
+	CRect emojiRect(clientRect.right - 150, rect.bottom, clientRect.right - 100, clientRect.bottom); 
 	CRect imageRect(clientRect.right - 100, rect.bottom, clientRect.right - 50, clientRect.bottom);
 	CRect fileRect(clientRect.right - 50, rect.bottom, clientRect.right, clientRect.bottom);
 
 	sendButton.Create(_T("Send"), WS_CHILD | WS_VISIBLE, sendRect, this, 1403); 
-	emoijButton.Create(_T("Emoiji"), WS_CHILD | WS_VISIBLE, emoijRect, this, 1404);
+	emojiButton.Create(_T("Emoiji"), WS_CHILD | WS_VISIBLE, emojiRect, this, 1404);
 	imageButton.Create(_T("Img"), WS_CHILD | WS_VISIBLE, imageRect, this, 1405);
 	fileButton.Create(_T("File"), WS_CHILD | WS_VISIBLE, fileRect, this, 1406);
 
@@ -70,9 +70,68 @@ void CChatView::OnSendButtonClicked()
 	APIHelper::SendMessageTo(this->GetSafeHwnd(), m_inputController);
 	input.SetWindowTextW(_T(""));
 }
-void CChatView::OnEmoijButtonClicked()
+void CChatView::OnEmojiButtonClicked()
 {
-	// hien thi bang chon
+	if (m_pEmojiPicker == nullptr)
+	{
+		m_pEmojiPicker = new CEmojiPicker(this);
+		m_pEmojiPicker->Create(IDD_EMOJIPICKER, this);
+
+		// Hiển thị tại vị trí phù hợp
+		CRect rcBtn;
+		GetDlgItem(1404)->GetWindowRect(&rcBtn);
+		m_pEmojiPicker->SetWindowPos(NULL, rcBtn.left, rcBtn.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+	}
+	else
+	{
+		m_pEmojiPicker->ShowWindow(SW_SHOW);
+		m_pEmojiPicker->SetFocus();
+	}
+}
+void CChatView::EmojiHandle(UINT sel)
+{
+	input.GetWindowTextW(m_inputController); 
+
+	CString emoji; 
+	switch (sel)
+	{
+	case 1:
+		emoji = _T(":)");
+		break;
+	case 2:
+		emoji = _T(":>");
+		break;
+	case 3:
+		emoji = _T(":D");
+		break;
+	case 4:
+		emoji = _T(":'(");
+		break;
+	case 5:
+		emoji = _T(">:(");
+		break;
+	case 6:
+		emoji = _T(":P");
+		break;
+	case 7:
+		emoji = _T("O_O");
+		break;
+	case 8:
+		emoji = _T(":3");
+		break;
+	case 9:
+		emoji = _T(":-|");
+		break;
+	case 10:
+		emoji = _T("^_^");
+		break;
+	default:
+		emoji = _T("");
+		break;
+	}
+	m_inputController += emoji; 
+
+	input.SetWindowTextW(m_inputController); 
 }
 void CChatView::OnImageButtonClicked()
 {
@@ -166,9 +225,6 @@ LRESULT CChatView::OnResponseGetAllMessages(WPARAM wParam, LPARAM lParam)
 	
 	MessageHelper::WaitResource(allVector);
 	
-	CString form = _T("So luong message %d"); 
-	form.Format(form, allVector.size()); 
-	AfxMessageBox(form); 
 	// Luu vao database 
 	DatabaseManager::GetInstance().InsertMessage(allVector);
 
@@ -265,8 +321,11 @@ void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt)
 	// neu da ton tai trong cach
 	
 	// cap nhat lai lastSynced ( bằng tin nhắn cuối ) 
-	Entities::Message message = GlobalParam::messages[user.friendId].back(); 
-	DatabaseManager::GetInstance().UpdateLastSynced(user.friendId, message.time); 
+	if (GlobalParam::messages[user.friendId].size() != 0)
+	{
+		Entities::Message message = GlobalParam::messages[user.friendId].back();
+		DatabaseManager::GetInstance().UpdateLastSynced(user.friendId, message.time);
+	}
 
 	// Goi den ham khoi tao message
 
@@ -274,11 +333,13 @@ void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt)
 	{
 		listMessage.AddItem(item);
 	}
+	int count = listMessage.GetCount(); 
+	listMessage.SetTopIndex(count - 1); 
 }
 
 BEGIN_MESSAGE_MAP(CChatView, CDialogEx)
 	ON_BN_CLICKED(1403, &CChatView::OnSendButtonClicked)
-	ON_BN_CLICKED(1404, &CChatView::OnEmoijButtonClicked)
+	ON_BN_CLICKED(1404, &CChatView::OnEmojiButtonClicked)
 	ON_BN_CLICKED(1405, &CChatView::OnImageButtonClicked)
 	ON_BN_CLICKED(1406, &CChatView::OnFileButtonClicked)
 	ON_MESSAGE(WM_RESPONSE_ALL_MSG, &CChatView::OnResponseGetAllMessages)

@@ -26,11 +26,12 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	
+	virtual void OnClose();
 	afx_msg void OnSelChangeListFriend();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor); 
 	afx_msg LRESULT OnResponseFriend(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT LateInitData(WPARAM wParam, LPARAM lParam);
+
 	void InitUI(); 
 	CEdit m_searchBar; 
 	CStatic m_infoBar;
