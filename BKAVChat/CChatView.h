@@ -8,6 +8,7 @@
 #include "Entities.h"
 #include <vector>
 #include "CEmojiPicker.h"
+#include "CCButton.h"
 // CChatView dialog
 
 class CChatView : public CDialogEx
@@ -43,11 +44,14 @@ protected:
 	CListMessage listMessage;
 
 	CEdit input;
+	CFont m_font;
+	HICON m_hIcon; 
 	CString m_inputController;
-	CButton sendButton;
-	CButton emojiButton; 
-	CButton imageButton; 
-	CButton fileButton;
+	CCButton m_sendButton;
+	CCButton m_emojiButton; 
+	CCButton m_imageButton; 
+	CCButton m_fileButton;
+	
 	CEmojiPicker* m_pEmojiPicker;
 	DECLARE_MESSAGE_MAP()
 };

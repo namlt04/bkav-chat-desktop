@@ -32,28 +32,45 @@ BOOL CChatView::OnInitDialog()
 	CDialog::OnInitDialog();
 	this->SetWindowPos(NULL, 0, 0, 800, 600, SWP_NOMOVE | SWP_NOZORDER);
 	this->SetWindowTextW(_T("BKAV Chat - ") + user.showName); 
-	CRect rect;
-	CRect clientRect;
-	GetClientRect(&clientRect);
+	CRect rClient;
+	GetClientRect(&rClient);
+	UINT width = rClient.Width();
+	UINT height = rClient.Height();
+	m_font.CreateFont(
+		height / 20,                    // Chiều cao font (pixel)
+		0,                     // Chiều rộng (0 = tự tính)
+		0, 0,                  // Escapement, Orientation
+		FW_BOLD,               // Đậm
+		FALSE,                 // Italic
+		FALSE,                 // Underline
+		0,                     // Strikeout
+		ANSI_CHARSET,          // Charset (dùng ANSI nếu không cần Unicode đặc biệt)
+		OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY,
+		DEFAULT_PITCH | FF_DONTCARE,
+		_T("Segoe UI")         // Tên font
+	);
+	CRect rLM = rClient; 
+	rLM.bottom -= (height / 12); 
+	listMessage.Create(rLM, this, 1401);
 
-	GetClientRect(&rect);
-	rect.bottom -= 50;
-	listMessage.Create(rect, this, 1401);
 
 
-
-	CRect inputRect(0, rect.bottom,clientRect.right - 200 , clientRect.bottom);
+	CRect rI(0, rLM.bottom, rClient.right - ( 4 * (height / 12))   , rClient.bottom);
 	
-	input.Create(WS_CHILD | WS_VISIBLE, inputRect, this, 1402);
-	CRect sendRect(clientRect.right - 200, rect.bottom, clientRect.right - 150, clientRect.bottom); 
-	CRect emojiRect(clientRect.right - 150, rect.bottom, clientRect.right - 100, clientRect.bottom); 
-	CRect imageRect(clientRect.right - 100, rect.bottom, clientRect.right - 50, clientRect.bottom);
-	CRect fileRect(clientRect.right - 50, rect.bottom, clientRect.right, clientRect.bottom);
+	input.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOVSCROLL | ES_MULTILINE , rI, this, 1402);
+	input.SetFont(&m_font);
+	CRect rS(rI.right, rI.top, rI.right + (height / 12),rI.bottom);
+	CRect rE(rS.right, rI.top, rS.right + (height / 12 ), rI.bottom);
+	CRect rImg(rE.right, rI.top, rE.right + (height / 12) , rI.bottom);
+	CRect rF(rImg.right, rI.top, rImg.right + (height / 12 ), rI.bottom);
 
-	sendButton.Create(_T("Send"), WS_CHILD | WS_VISIBLE , sendRect, this, 1403); 
-	emojiButton.Create(_T("Emoiji"), WS_CHILD | WS_VISIBLE, emojiRect, this, 1404);
-	imageButton.Create(_T("Img"), WS_CHILD | WS_VISIBLE, imageRect, this, 1405);
-	fileButton.Create(_T("File"), WS_CHILD | WS_VISIBLE, fileRect, this, 1406);
+	m_hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME); 
+	m_sendButton.Create(&m_hIcon, rS, this, 1403);
+	m_emojiButton.Create(&m_hIcon, rE, this, 1404);
+	m_imageButton.Create(&m_hIcon, rImg, this, 1405);
+	m_fileButton.Create(&m_hIcon, rF, this, 1406);
 
 
 	APIHelper::GetMessageFromServer(this->GetSafeHwnd(), user.friendId);
