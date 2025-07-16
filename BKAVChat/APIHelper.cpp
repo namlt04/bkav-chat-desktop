@@ -7,6 +7,12 @@
 std::queue<APIRequest> APIHelper::ApiQueue;
 std::mutex APIHelper::QueueMutex;
 std::condition_variable APIHelper::QueueCV;
+
+
+
+//std::queue<bool> APIHelper::downloading;
+//std::mutex APIHelper::downloadingMutex;
+//std::condition_variable APIHelper::downloadingQueueCV; 
 bool APIHelper::StopThread = false;
 
 
@@ -33,9 +39,10 @@ void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
 		CPath path(link); 
 		CStringA contentType = "";
 		CString ext = path.GetExtension();
-		if ( ext == _T("png"))
+		//AfxMessageBox(ext); 
+		if ( ext == _T(".png"))
 			contentType = "Content-Type: image/png\r\n\r\n";
-		else if (ext == _T("jpg") || ext == _T("jpeg"))
+		else if (ext == _T(".jpg") || ext == _T(".jpeg"))
 			contentType = "Content-Type: image/jpeg\r\n\r\n";
 		else 
 			contentType = "Content-Type: application/octet-stream\r\n\r\n";
@@ -94,7 +101,7 @@ void APIHelper::Login(HWND hTargetWnd, const CString& username, const CString& p
 	// tu CStringA chuyen sang vector<BYTE>
 	request.body.insert(request.body.end(), (BYTE*)utf8Body.GetString(), (BYTE*)utf8Body.GetString() + utf8Body.GetLength());
 	CString path; 
-	path = request.path +  _T("auth/login");
+	path = request.path +  _T("/auth/login");
 	request.path = path;
 
 	request.headers = _T("Content-Type: application/json\r\n");
@@ -117,7 +124,7 @@ void APIHelper::Register(HWND hTargetWnd, const CString& email, const CString& u
 	CStringA bodyUtf8(json_string.c_str());
 
 	request.body.insert(request.body.end(), (BYTE*)bodyUtf8.GetString(), (BYTE*)bodyUtf8.GetString() + bodyUtf8.GetLength());
-	CString path = request.path + _T("auth/register");
+	CString path = request.path + _T("/auth/register");
 	request.path = path;
 	
 
@@ -127,10 +134,12 @@ void APIHelper::Register(HWND hTargetWnd, const CString& email, const CString& u
 
 	ApiQueue.push(request);
 	QueueCV.notify_one();
+	//AfxMessageBox(_T("Cho tai xuong xong, dam bao khong loi")); 
+
 
 
 }
-void APIHelper::GetMessage(HWND hTargetWnd, CString friendId)
+void APIHelper::GetMessageFromServer(HWND hTargetWnd, CString friendId)
 {
 	CString ret = DatabaseManager::GetInstance().CheckLastSynced(friendId); 
 	if (!ret.IsEmpty())
@@ -167,6 +176,8 @@ void APIHelper::GetLastMessage(HWND hTargetWnd, CString FriendID, CString LastTi
 	CString header;
 	header.Format(_T("Authorization: Bearer %s \r\n"), GlobalParam::token.GetString());
 	request.headers = header;
+	//AfxMessageBox(_T("Cho tai xuong xong, dam bao khong loi")); 
+
 
 	CString path;
 	path.Format(_T("/api/message/get-message?FriendID=%s&LastTime=%s"), FriendID.GetString(), LastTime.GetString());
@@ -242,13 +253,24 @@ void APIHelper::GetResource(HWND hTargetHwnd,CString url, CString saveUrl)
 	// Neu yeu cau avatar phai chinh sua truoc khi goi APIHelper::GetResource
 
 	CString path = request.path;
-	request.path = path + url; 
+	request.path = _T("http://") + request.host + _T(":8888") + path + url;
 	request.headers = saveUrl;
-	// if request.method == GET_RESOURCE : 
-	//AfxMessageBox(_T("Da duoc goi de tai file"));
-
 	request.hTargetHwnd = hTargetHwnd;
 	ApiQueue.push(request); 
+	QueueCV.notify_one();
+}
+
+void APIHelper::AutoGetResource(HWND hTargetHwnd, CString url)
+{
+	APIRequest request;
+	request.method = _T("AUTO_GET_RESOURCE");
+	CString path = request.path;
+	request.path = _T("http://") + request.host + _T(":8888") + path + url;
+	//AfxMessageBox(request.path); 
+	url.Replace('/', '\\'); 
+	request.headers = FileManager::m_path + url;
+	request.hTargetHwnd = hTargetHwnd;  
+	ApiQueue.push(request);
 	QueueCV.notify_one();
 }
 
@@ -286,36 +308,40 @@ UINT APIHelper::NetworkThreadHandle(LPVOID pParam)
 }
 void APIHelper::SendApi(APIRequest& request)
 {
-	if (request.method == "GET_RESOURCE")
+	if (request.method == _T("AUTO_GET_RESOURCE"))
 	{
-		CString path = _T("http://") + request.host + _T(":8888") + request.path;
-		LPCTSTR filename = PathFindFileName(request.path);
-		CString localUrl;
-		if (request.headers == _T("/images"))
-		{
-			// neu yeu cau tu dong tai
+		//std::lock_guard<std::mutex> lock(downloadingMutex);
+		//downloading.push(true);
+		//	URLDownloadToFile(NULL, request.path, request.headers, 0, NULL);
+		//	std::lock_guard<std::mutex> lock(downloadingMutex);
+		//	if (!downloading.empty()) {
+		//		downloading.pop();
+		//	}
 
-			// Tai xuong image
-			localUrl = FileManager::m_imagesPath + _T("\\") + filename;
-		}
-		else if (request.headers == _T("/avatar"))
-			// tu dong tai xuong avatar 
-			localUrl = FileManager::m_avatarPath + _T("\\") + filename;
-		 else 
-			// yeu cau tai file, hoac anh
-			localUrl = request.headers;
-		// 1. tu dong tai anh ve de hien thi, tu goi path
-		// yeu cau tai file hoac anh : path day du
-		URLDownloadToFile(NULL, path, localUrl, 0, NULL);
+			//{
+			//	// Lock mutex, push true khi bắt đầu tải
+			//	std::lock_guard<std::mutex> lock(downloadingMutex);
+			//	downloading.push(true);
+			//}
 
-		if (request.headers != _T("/images") && request.headers != _T("/avatar"))
-		{
-			CString str;
-			str.Format(_T("Da tai xuong thanh cong tai %s"), localUrl);
-			//AfxMessageBox(str);
-		}
+			// Tải file bên ngoài mutex (không giữ mutex lâu)
+			URLDownloadToFile(NULL, request.path, request.headers, 0, NULL);
+
+			//{
+			//	// Lock mutex, pop khi tải xong
+			//	std::lock_guard<std::mutex> lock(downloadingMutex);
+			//	if (!downloading.empty()) {
+			//		downloading.pop();
+			//	}
+			//}
+			// Nếu có condition_variable thì notify UI hoặc thread khác ở đây
 	}
-	else
+	else  
+		if (request.method == _T("GET_RESOURCE"))
+		{
+			URLDownloadToFile(NULL, request.path, request.headers, 0, NULL);
+			AfxMessageBox(_T("Tai xuong thanh cong")); 
+		} else
 	{
 		CString response;
 		CInternetSession session(_T("BKAVChat"));
@@ -358,13 +384,17 @@ void APIHelper::SendApi(APIRequest& request)
 		session.Close();
 		//AfxMessageBox(response);
 		CString* pResponse = new CString(response);
+		//AfxMessageBox(_T("Nhan thong tin ")); 
 		::PostMessage(request.hTargetHwnd, request.messageId, 0, (LPARAM)pResponse);
 	}
 }
-bool APIHelper::IsQueueEmpty()
-{
-	std::lock_guard<std::mutex> lock(QueueMutex);  // Bảo vệ tránh race condition
-	return ApiQueue.empty();
-}
-
-
+//bool APIHelper::IsQueueEmpty()
+//{
+//	std::lock_guard<std::mutex> lock(QueueMutex);  // Bảo vệ tránh race condition
+//	return ApiQueue.empty();
+//}
+//bool APIHelper::IsDownloading()
+//{
+//	std::lock_guard<std::mutex> lock(downloadingMutex); 
+//	return !downloading.empty();
+//}

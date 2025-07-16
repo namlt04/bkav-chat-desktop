@@ -4,8 +4,8 @@
 #include <vector>
 // CEmojiPicker dialog
 
-#include "CChatView.h"
-//class CChatView; 
+//#include "CChatView.h"
+class CChatView;
 class CEmojiPicker : public CDialogEx
 {
 	DECLARE_DYNAMIC(CEmojiPicker)
@@ -24,7 +24,7 @@ protected:
 	virtual BOOL OnInitDialog(); 
 	afx_msg void OnBnClicked(UINT nId);
 	CChatView* m_pParent = nullptr; 
-	std::vector<CCButton> m_vbutton; 
+	std::vector<CCButton> m_vButton; 
 	HICON m_hIcon; 
 	DECLARE_MESSAGE_MAP()
 };

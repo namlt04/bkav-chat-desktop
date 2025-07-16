@@ -183,9 +183,17 @@ LRESULT CHomeView::OnResponseFriend(WPARAM wParam, LPARAM lParam)
 {
 	CString* pResponse = (CString*)lParam;
 	std::string str_response = std::string(CT2A(*pResponse));
-
+	AfxMessageBox(*pResponse);
 	nlohmann::json j;
-	j = nlohmann::json::parse(str_response);
+	//j = nlohmann::json::parse(str_response);
+
+	try {
+		j = nlohmann::json::parse(str_response);
+	}
+	catch (const std::exception& e) {
+		AfxMessageBox(CA2T(e.what()));
+		return -1;
+	}
 
 	for (const auto& item : j["data"])
 	{
@@ -197,13 +205,21 @@ LRESULT CHomeView::OnResponseFriend(WPARAM wParam, LPARAM lParam)
 		CString content = CA2T(tmp.c_str(), CP_UTF8);
 		if (content.IsEmpty())
 		{
-			if (item["Files"].size() != 0)
-				content += _T("%d tập tin"); 
-			if (item["Images"].size() != 0)
+			if (item["Files"].is_array() && !item["Files"].empty())
+			{
+				CString temp;
+				temp.Format(_T("%d tập tin"), (int)item["Files"].size());
+				content += temp;
+			}
+			if (item["Images"].is_array() && !item["Images"].empty())
+			{
+				CString temp; 
 				if (content.IsEmpty())
-						content += _T("%d hình ảnh");
+					temp.Format(_T("%d hình ảnh"), item["Images"].size());
 				else
-						content += _T(" và %d hình ảnh"); 
+					temp.Format(_T(" và %d hình ảnh"), item["Images"].size());
+				content += temp; 
+			}
 		}
 
 		if (content.IsEmpty()) 

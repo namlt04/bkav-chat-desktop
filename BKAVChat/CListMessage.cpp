@@ -19,6 +19,7 @@ BOOL CListMessage::Create(const CRect& rect, CWnd* pParent, UINT nId) {
 void CListMessage::AddItem(Entities::Message message)
 {
     vt.push_back(message);
+    //AfxMessageBox(message.link);
     AddString(message.content); 
 }
 

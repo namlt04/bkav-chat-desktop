@@ -14,7 +14,7 @@ CEmojiPicker::CEmojiPicker(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_EMOJIPICKER, pParent)
 {
 	m_pParent = (CChatView*) pParent;
-	m_vbutton = std::vector<CCButton>(10); 
+	m_vButton = std::vector<CCButton>(16); 
 	m_hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME); 
 
 }
@@ -31,15 +31,24 @@ BOOL CEmojiPicker::OnInitDialog()
 {
 	CDialogEx::OnInitDialog(); 
 	this->SetWindowTextW(_T("BKAV Chat - Emoji")); 
-	this->SetWindowPos(NULL, 0, 0, 400, 200, 0);
+	CRect rF(0, 0, 160, 160); 
+	AdjustWindowRect(&rF, GetStyle(), FALSE); 
+
+	this->SetWindowPos(NULL, 0, 0, rF.Width(), rF.Height(), 0);
 	CRect rClient;
 	GetClientRect(&rClient); 
-	for (int i = 0; i < 10; i++)
-
+	
+	UINT cnt = 0; 
+	
+	while (cnt < 16)
 	{
-
-		CRect rect(i * 40, 0 , (i + 1) * 40, 40);
-		m_vbutton[i].Create(&m_hIcon, rect, this, 1000 + i + 1); 
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+			{
+				CRect rTmp(i * 40, j * 40, (i + 1) * 40,(j + 1)*40);
+				m_vButton[cnt].Create(&m_hIcon, rTmp, this, 1000 + cnt);
+				cnt += 1; 
+			}
 	}
 	return TRUE;
 	
@@ -49,12 +58,12 @@ BOOL CEmojiPicker::OnInitDialog()
 void CEmojiPicker::OnBnClicked(UINT nId) 
 
 {
-	UINT nIndex = 1011 - nId;
+	UINT nIndex = 1015 - nId;
 	m_pParent->EmojiHandle(nIndex);
 
 }
 BEGIN_MESSAGE_MAP(CEmojiPicker, CDialogEx)
-	ON_COMMAND_RANGE(1001, 1011, &CEmojiPicker::OnBnClicked) 
+	ON_COMMAND_RANGE(1000, 1015, &CEmojiPicker::OnBnClicked) 
 END_MESSAGE_MAP()
 
 

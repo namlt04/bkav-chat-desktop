@@ -62,12 +62,12 @@ void DatabaseManager::Close()
 		m_db = nullptr;
 	}
 }
-std::vector<Entities::Message> DatabaseManager::GetMessage(CString friendId)
+std::vector<Entities::Message> DatabaseManager::GetMessageFromLocal(CString friendId)
 {
 	
 	std::vector<Entities::Message> ret;
 	// them trường freindID
-	const char* sql = "select type, content, link, time from messages where friendId = ? order by datetime(time) asc, id asc;";
+	const char* sql = "select type, content, link, time , width, height, messageType from messages where friendId = ? order by datetime(time) asc, id asc;";
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
 	{
@@ -80,13 +80,18 @@ std::vector<Entities::Message> DatabaseManager::GetMessage(CString friendId)
 				msg.content = CString(CA2T((const char*)(sqlite3_column_text(stmt, 1))));
 				msg.link = CString(CA2T((const char*)(sqlite3_column_text(stmt, 2))));
 				msg.time = 	CString(CA2T((const char*)(sqlite3_column_text(stmt, 3)))) ; 
+				msg.width = sqlite3_column_int(stmt, 4);
+				msg.height = sqlite3_column_int(stmt, 5);
+				msg.messageType = sqlite3_column_int(stmt, 6);
 
 				ret.push_back(msg); 
 			}
 
 	}
 	sqlite3_finalize(stmt); 
-
+	//CString format;
+	//format.Format(_T("So tin nhan truy van ra : %d"), ret.size());
+	//AfxMessageBox(format);
 	return ret; 
 }
 CString DatabaseManager::CheckLastSynced(CString friendId)

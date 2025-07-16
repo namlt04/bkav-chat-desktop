@@ -11,9 +11,8 @@ public :
 	static BOOL DefaultConfig();
 	static BOOL SaveConfig(CString username, CString password, bool remember);
  
+	static CString m_path; 
 	static CString m_configPath; 
 	static CString m_databasePath;
-	static CString m_imagesPath;
-	static CString m_avatarPath;
 };
 

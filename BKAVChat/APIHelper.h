@@ -21,7 +21,7 @@ struct APIRequest {
 	APIRequest(
 		const CString& m = _T("POST"),
 		const CString& h = _T("localhost"),
-		const CString& p = _T("/api/"),
+		const CString& p = _T("/api"),
 		INTERNET_PORT pt = 8888,
 		const CString& hdr = _T(""),
 		std::vector<BYTE> body = {},
@@ -42,7 +42,7 @@ public:
 
 	static std::condition_variable queue;
 
-	static void GetMessage(HWND hTargetWnd, CString FriendID); // tao cac api
+	static void GetMessageFromServer(HWND hTargetWnd, CString FriendID); // tao cac api
 	static void GetLastMessage(HWND hTargetWnd, CString FriendID, CString LastTime); // tao cac api
 
 	static void SendMessageTo(HWND hTargetWnd, CString msg);
@@ -52,10 +52,10 @@ public:
 	static void GetInformation(HWND hTargetWnd);
 	static void Login(HWND hTargetWnd, const CString& username, const CString& password); 
 	static void Register(HWND hTargetWnd, const CString& email, const CString& username, const CString& password); 
-
-	static bool APIHelper::IsQueueEmpty();
+	static void AutoGetResource(HWND hTargetHwnd, CString url);
+	//static bool IsQueueEmpty();
+	//static bool IsDownloading(); 
 	static void SendApi(APIRequest& request); // gui va chờ nhận
-	
 	// mot ham de khoi tao ,
 	// ham de queue luon tu hoat dong 
 	static UINT NetworkThreadHandle(LPVOID pParam);
@@ -65,8 +65,14 @@ private:
 	// luôn lock mutex khi truy cap
 	static std::condition_variable QueueCV;
 	// Đánh thức thread nền khi có request mới trong queue
-
 	static bool StopThread;
+
+	//static std::queue<bool> downloading; 
+	//static std::mutex downloadingMutex; 
+
+	//static std::condition_variable downloadingQueueCV; 
+
+
 
 
 };

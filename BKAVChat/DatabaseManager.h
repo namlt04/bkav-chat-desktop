@@ -11,7 +11,7 @@ public :
 	~DatabaseManager(); 
 	static DatabaseManager& GetInstance();
 	CString CheckLastSynced(CString friendId);
-	std::vector<Entities::Message> GetMessage(CString friendId);
+	std::vector<Entities::Message> GetMessageFromLocal(CString friendId);
 	BOOL InsertMessage(std::vector<Entities::Message> vt); 
 	BOOL UpdateLastSynced(CString friendId, CString lastSynced); 
 	bool Connect(); 

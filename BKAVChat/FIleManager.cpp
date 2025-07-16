@@ -5,25 +5,22 @@
 //sqlite3* FileManager::m_db = nullptr;
 CString FileManager::m_databasePath = _T("");
 CString FileManager::m_configPath = _T("");
-CString FileManager::m_imagesPath = _T("");
-CString FileManager::m_avatarPath = _T("");
+CString FileManager::m_path = _T(""); 
 BOOL FileManager::Init()
 {
 	TCHAR* appdata = nullptr;
 	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &appdata);
 
 	CString path(appdata); // Tạo chuỗi CString từ chuỗi TCHAR  
-
+	FileManager::m_path = path + _T("\\BKAVChat");
 	FileManager::m_databasePath = path + _T("\\BKAVChat\\message.db"); 
 	FileManager::m_configPath = path + _T("\\BKAVChat\\config.json");
-	FileManager::m_imagesPath = path + _T("\\BKAVChat\\images");
-	FileManager::m_avatarPath = path + _T("\\BKAVChat\\images\\avatar");
 
 
 	// tao BKAVChat, images, avatar
 	CreateDirectory(path + _T("\\BKAVChat"), NULL);
-	CreateDirectory(m_imagesPath, NULL);
-	CreateDirectory(m_avatarPath,NULL);
+	CreateDirectory(m_path + _T("\\images"), NULL);
+	CreateDirectory(m_path + _T("\\images\\avatar"), NULL);
 
 	CoTaskMemFree(appdata);
 

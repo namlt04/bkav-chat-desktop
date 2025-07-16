@@ -87,10 +87,10 @@
     <ClInclude Include="DatabaseManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\Downloads\sqlite-amalgamation-3500200\sqlite-amalgamation-3500200\sqlite3.h">
+    <ClInclude Include="CEmojiPicker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CEmojiPicker.h">
+    <ClInclude Include="sqlite3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -140,10 +140,10 @@
     <ClCompile Include="DatabaseManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\Downloads\sqlite-amalgamation-3500200\sqlite-amalgamation-3500200\sqlite3.c">
+    <ClCompile Include="CEmojiPicker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CEmojiPicker.cpp">
+    <ClCompile Include="sqlite3.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

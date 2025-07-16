@@ -40,10 +40,6 @@ BOOL CChatView::OnInitDialog()
 	rect.bottom -= 50;
 	listMessage.Create(rect, this, 1401);
 
-	/*for (const Message& item : GlobalParam::messages[GlobalParam::current])
-	{
-		listMessage.AddItem(item);
-	}*/
 
 
 	CRect inputRect(0, rect.bottom,clientRect.right - 200 , clientRect.bottom);
@@ -54,13 +50,13 @@ BOOL CChatView::OnInitDialog()
 	CRect imageRect(clientRect.right - 100, rect.bottom, clientRect.right - 50, clientRect.bottom);
 	CRect fileRect(clientRect.right - 50, rect.bottom, clientRect.right, clientRect.bottom);
 
-	sendButton.Create(_T("Send"), WS_CHILD | WS_VISIBLE, sendRect, this, 1403); 
+	sendButton.Create(_T("Send"), WS_CHILD | WS_VISIBLE , sendRect, this, 1403); 
 	emojiButton.Create(_T("Emoiji"), WS_CHILD | WS_VISIBLE, emojiRect, this, 1404);
 	imageButton.Create(_T("Img"), WS_CHILD | WS_VISIBLE, imageRect, this, 1405);
 	fileButton.Create(_T("File"), WS_CHILD | WS_VISIBLE, fileRect, this, 1406);
 
 
-	APIHelper::GetMessage(this->GetSafeHwnd(), user.friendId);
+	APIHelper::GetMessageFromServer(this->GetSafeHwnd(), user.friendId);
 
 	return TRUE;
 }
@@ -125,6 +121,24 @@ void CChatView::EmojiHandle(UINT sel)
 	case 10:
 		emoji = _T("^_^");
 		break;
+	case 11:
+		emoji = _T("T_T");
+		break;
+	case 12:
+		emoji = _T("xD");
+		break;
+	case 13:
+		emoji = _T("<3");
+		break;
+	case 14:
+		emoji = _T(":o");
+		break;
+	case 15:
+		emoji = _T(":v");
+		break;
+	case 16:
+		emoji = _T("-_-");
+		break;
 	default:
 		emoji = _T("");
 		break;
@@ -135,7 +149,8 @@ void CChatView::EmojiHandle(UINT sel)
 }
 void CChatView::OnImageButtonClicked()
 {
-	CFileDialog dlg(TRUE, NULL, NULL, OFN_FILEMUSTEXIST, _T("*.jpg; *.jpeg;*.png"), AfxGetMainWnd());
+	LPCTSTR lpszFilter = _T("Image Files (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png|All Files (*.*)|*.*||");
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_FILEMUSTEXIST, lpszFilter, AfxGetMainWnd());
 	if (dlg.DoModal() == IDOK)
 	{
 
@@ -156,19 +171,28 @@ void CChatView::OnFileButtonClicked()
 }
 LRESULT CChatView::OnResponseSend(WPARAM wParam, LPARAM lParam)
 {
+	// Gui tin nhan -> nhan Response 
+	// 1. Phan tich Response thanh List cac message 
+	// 2. Them Message vao LOCAL 
+	// 3. Them Message vao cache 
+	// 4. Chi them cac Message moi nay vao ListMessage, vi ListMessage da khoi tao roi 
 	CString* pResponse = (CString*)lParam;
 	std::string str_response = std::string(CT2A(*pResponse));
 	nlohmann::json j; 
 	j = nlohmann::json::parse(str_response); 
 	nlohmann::json tmp = j["data"]; 
 	std::string tmp_str = tmp.dump(); 
-	MessageHelper::Json2Message(tmp_str, this); 
-	AfxMessageBox(_T("Da them tin nhan moi"));
-	//MessageHelper::WaitResource();
-	//Message message = GlobalParam::messages[GlobalParam::current].back();
+	std::vector<Entities::Message> tmpVector; 
 
-	//listMessage.AddItem(message);
-	delete pResponse; 
+	tmpVector = MessageHelper::Json2Message(tmp_str, this, user.friendId); 
+	MessageHelper::WaitResource(tmpVector); // Chac chan phai co tin nhan
+	// Ghi vao trong LOCAL 
+	DatabaseManager::GetInstance().InsertMessage(tmpVector); 
+
+	// Luu vao trong cache
+	SaveMessageIntoCache(tmpVector, false); 
+	
+	AddItemToListMessage(tmpVector); 
 	return 0;
  
 }
@@ -181,7 +205,7 @@ void CChatView::OnSelChange()
 		Message* message = listMessage.GetMessageAt(sel);
 		if (message->type == 2)
 		{
-			AfxMessageBox(message->text);
+			//AfxMessageBox(message->text);
 			CString ext = PathFindExtension(message->text);   // .txt
 			ext.TrimLeft('.');
 			CFileDialog dlg(FALSE, ext , message->text,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All Files (*.*)|*.*||"), this);
@@ -219,7 +243,7 @@ LRESULT CChatView::OnResponseGetAllMessages(WPARAM wParam, LPARAM lParam)
 	for (const auto& item : j["data"]) 
 	{
 		std::string param = item.dump();
-		tmpVector = MessageHelper::Json2Message(param, this); // tra ve 1 vector to, sau do them no vao vector chinh
+		tmpVector = MessageHelper::Json2Message(param, this, user.friendId); // tra ve 1 vector to, sau do them no vao vector chinh
 		allVector.insert(allVector.end(), tmpVector.begin(), tmpVector.end()); 
 	}
 	
@@ -228,7 +252,7 @@ LRESULT CChatView::OnResponseGetAllMessages(WPARAM wParam, LPARAM lParam)
 	// Luu vao database 
 	DatabaseManager::GetInstance().InsertMessage(allVector);
 
-	SaveMessageIntoCache(allVector);
+	SaveMessageIntoCache(allVector, true);
 
 
 	return 0;
@@ -268,13 +292,15 @@ LRESULT CChatView::OnResponseGetLastMessages(WPARAM wParam, LPARAM lParam)
 	for (const auto& item : j["data"])
 	{
 		std::string param = item.dump();
-		tmpVector = MessageHelper::Json2Message(param, this); 
+		tmpVector = MessageHelper::Json2Message(param, this, user.friendId); 
 		allVector.insert(allVector.end(), tmpVector.begin(), tmpVector.end()); 
 	}
 
 	// Doi tai ve cac tai nguyen ( hinh anh ) 
 	MessageHelper::WaitResource(allVector); 
-
+	//CString format; 
+	//format.Format(_T("So tin nhan moi: %d"), allVector.size()); 
+	//AfxMessageBox(format); 
 	// Them tin nhan vao LOCAL 
 	DatabaseManager::GetInstance().InsertMessage(allVector); 
 	
@@ -282,11 +308,11 @@ LRESULT CChatView::OnResponseGetLastMessages(WPARAM wParam, LPARAM lParam)
 	// 		- Co tin nhan moi 
 	//		- Khong co tin nhan moi
 
-	SaveMessageIntoCache(allVector); 
+	SaveMessageIntoCache(allVector, true); 
 	return 0;
 }
 
-void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt)
+void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt, bool isCreate)
 {
 	// Neu friendId 
 	// - Da ton tai trong cache, them vao cuoi 
@@ -294,8 +320,9 @@ void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt)
 	//		+ Neu queue > 5, thi xoa friendId cho vao som nhat
 	//		+ Neu queue < 5, them vao binh thuong 
 	std::vector<Entities::Message> vt_allMsg;
-	if (GlobalParam::messages.find(user.friendId) != GlobalParam::messages.end() )
+	if (GlobalParam::messages.find(user.friendId) == GlobalParam::messages.end() )
 	{
+		// Neu queueKey co kich thuoc > 5 thi xoa di 1 cai 
 		if (GlobalParam::queueKey.size() > 5)
 		{
 			// Lay phan tu dau tien cua hang doi 
@@ -310,12 +337,18 @@ void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt)
 
 		// Day friendId moi 
 		GlobalParam::queueKey.push(user.friendId);
-		vt_allMsg = DatabaseManager::GetInstance().GetMessage(user.friendId);
+		vt_allMsg = DatabaseManager::GetInstance().GetMessageFromLocal(user.friendId);
+		//CString format;
+		//format.Format(_T("So tin nhan truy van ra : %d"), vt_allMsg.size());
+		//AfxMessageBox(format);
 	}
 	else
 		vt_allMsg = vt;
-	// Problem : khi friendId da ton tai san thi no khong cap nhat lai
 
+	// Problem : khi friendId da ton tai san thi no khong cap nhat lai
+	//CString format;
+	//format.Format(_T("So tin nhan them vao : %d"), vt_allMsg.size());
+	//AfxMessageBox(format);
 	GlobalParam::messages[user.friendId].insert(GlobalParam::messages[user.friendId].end(),  vt_allMsg.begin(), vt_allMsg.end());
 	
 	// neu da ton tai trong cach
@@ -328,15 +361,22 @@ void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt)
 	}
 
 	// Goi den ham khoi tao message
-
-	for (const Entities::Message& item : GlobalParam::messages[user.friendId])
+	if (isCreate)
+		AddItemToListMessage(GlobalParam::messages[user.friendId]);
+}
+void CChatView::AddItemToListMessage(std::vector<Entities::Message> &vt)
+{
+	for (const Entities::Message& item : vt)
 	{
 		listMessage.AddItem(item);
 	}
 	int count = listMessage.GetCount(); 
-	listMessage.SetTopIndex(count - 1); 
+	listMessage.SetTopIndex(count - 1);
 }
-
+void CChatView::OnOK()
+{
+	OnSendButtonClicked(); 
+}
 BEGIN_MESSAGE_MAP(CChatView, CDialogEx)
 	ON_BN_CLICKED(1403, &CChatView::OnSendButtonClicked)
 	ON_BN_CLICKED(1404, &CChatView::OnEmojiButtonClicked)
