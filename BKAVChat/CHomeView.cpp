@@ -179,16 +179,15 @@ LRESULT CHomeView::LateInitData(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CHomeView::OnResponseFriend(WPARAM wParam, LPARAM lParam)
+LRESULT CHomeView::OnResponse(WPARAM wParam, LPARAM lParam)
 {
-	CString* pResponse = (CString*)lParam;
-	std::string str_response = std::string(CT2A(*pResponse));
-	AfxMessageBox(*pResponse);
-	nlohmann::json j;
+	std::string* pResponse = reinterpret_cast<std::string*>(lParam); 
+
+	nlohmann::json j; 
 	//j = nlohmann::json::parse(str_response);
 
 	try {
-		j = nlohmann::json::parse(str_response);
+		j = nlohmann::json::parse(*pResponse);
 	}
 	catch (const std::exception& e) {
 		AfxMessageBox(CA2T(e.what()));
@@ -246,6 +245,7 @@ LRESULT CHomeView::OnResponseFriend(WPARAM wParam, LPARAM lParam)
 		listFriend.AddItem(user); 
 
 	}
+	delete pResponse; 
 	return 0;
 }
 void CHomeView::OnClose()
@@ -255,7 +255,7 @@ void CHomeView::OnClose()
 }
 BEGIN_MESSAGE_MAP(CHomeView, CDialogEx)
 	ON_LBN_SELCHANGE(1305, &CHomeView::OnSelChangeListFriend)
-	ON_MESSAGE(WM_API_FRIEND, &CHomeView::OnResponseFriend)
+	ON_MESSAGE(WM_API_FRIEND, &CHomeView::OnResponse)
 	ON_MESSAGE(WM_INITDATA, &CHomeView::LateInitData)
 	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()

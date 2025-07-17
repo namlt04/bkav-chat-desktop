@@ -29,7 +29,7 @@ protected:
 	virtual void OnClose();
 	afx_msg void OnSelChangeListFriend();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor); 
-	afx_msg LRESULT OnResponseFriend(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnResponse(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT LateInitData(WPARAM wParam, LPARAM lParam);
 
 	void InitUI(); 

@@ -3,7 +3,7 @@
 
 
 
-std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWnd* cWnd, CString friendId)
+std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWnd* cWnd, CString friendId, CFont* font)
 {
 	std::vector<Entities::Message> ret;
 	nlohmann::json item; 
@@ -17,10 +17,22 @@ std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWn
 		message.friendId = friendId; 
 		message.type = 0;
 		tmp = item["Content"];
-		message.content = CString(CA2T(tmp.c_str()));
+	/*	message.content = CString(CA2T(tmp.c_str()), CP_UTF8);*/
+		
+		int len = MultiByteToWideChar(CP_UTF8, 0, tmp.c_str(), -1, nullptr, 0);
+		if (len > 0)
+		{
+			std::wstring wstr(len - 1, 0);
+			MultiByteToWideChar(CP_UTF8, 0, tmp.c_str(), -1, &wstr[0], len);
+			message.content = CString(wstr.c_str());
+		}
+		else
+		{
+			message.content = _T(""); // fallback nếu lỗi
+		}
 		CRect rect(0, 0, 360, 0);
 		CClientDC dc(cWnd);
-		//dc.DrawTextEx(message.text, rect, DT_WORDBREAK | DT_CALCRECT);
+		CFont* pOldFont = dc.SelectObject(font); 
 		DRAWTEXTPARAMS dtp = { sizeof(DRAWTEXTPARAMS) };
 		::DrawTextExW(
 			dc.GetSafeHdc(),                  // HDC
@@ -30,6 +42,7 @@ std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWn
 			DT_WORDBREAK | DT_CALCRECT | DT_EDITCONTROL,      // Format flags
 			&dtp                              // DRAWTEXTPARAMS*
 		);
+		dc.SelectObject(pOldFont); 
 		message.height = rect.Height() + 20;
 		message.width = rect.Width() + 20;
 		message.messageType = item["MessageType"];
@@ -53,10 +66,13 @@ std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWn
 			message.link = CString(CA2T(tmp.c_str()));
 
 			CClientDC dc(cWnd);
+			CFont* pOldFont = dc.SelectObject(font); 
+
 			CRect rect(0, 0, 360, 0);
-			dc.DrawText(message.content, rect, DT_SINGLELINE | DT_CALCRECT);
-			message.height = /* icon.hight() */ 32 + 20;
-			message.width = 32 + 5 + rect.Width() + 20;
+			dc.DrawText(message.content, rect, DT_CALCRECT);
+			dc.SelectObject(pOldFont); 
+			message.height = rect.Height() + 20;
+			message.width = rect.Width() +(6 * (rect.Height()) / 5) + 20;
 			tmp = item["CreatedAt"];
 			message.time = CString(CA2T(tmp.c_str()));
 			message.messageType = item["MessageType"];

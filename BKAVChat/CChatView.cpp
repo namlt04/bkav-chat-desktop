@@ -27,17 +27,17 @@ void CChatView::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 }
 
-BOOL CChatView::OnInitDialog() 
+BOOL CChatView::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	this->SetWindowPos(NULL, 0, 0, 800, 600, SWP_NOMOVE | SWP_NOZORDER);
-	this->SetWindowTextW(_T("BKAV Chat - ") + user.showName); 
+	this->SetWindowTextW(_T("BKAV Chat - ") + user.showName);
 	CRect rClient;
 	GetClientRect(&rClient);
 	UINT width = rClient.Width();
 	UINT height = rClient.Height();
 	m_font.CreateFont(
-		height / 20,                    // Chiều cao font (pixel)
+		height / 30,                    // Chiều cao font (pixel)
 		0,                     // Chiều rộng (0 = tự tính)
 		0, 0,                  // Escapement, Orientation
 		FW_BOLD,               // Đậm
@@ -51,15 +51,31 @@ BOOL CChatView::OnInitDialog()
 		DEFAULT_PITCH | FF_DONTCARE,
 		_T("Segoe UI")         // Tên font
 	);
-	CRect rLM = rClient; 
-	rLM.bottom -= (height / 12); 
-	listMessage.Create(rLM, this, 1401);
+
+	m_fontDownload.CreateFont(
+		height / 30,                    // Chiều cao font (pixel)
+		0,                     // Chiều rộng (0 = tự tính)
+		0, 0,                  // Escapement, Orientation
+		FW_BOLD,               // Đậm
+		FALSE,                 // Italic
+		TRUE,                 // Underline
+		0,                     // Strikeout
+		ANSI_CHARSET,          // Charset (dùng ANSI nếu không cần Unicode đặc biệt)
+		OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY,
+		DEFAULT_PITCH | FF_DONTCARE,
+		_T("Segoe UI")         // Tên font
+	);
+	CRect rLM = rClient;
+	rLM.bottom -= (height / 12);
+	listMessage.Create(rLM, this, 1401, &m_font, &m_fontDownload);
 
 
 
-	CRect rI(0, rLM.bottom, rClient.right - ( 4 * (height / 12))   , rClient.bottom);
-	
-	input.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOVSCROLL | ES_MULTILINE , rI, this, 1402);
+	CRect rI(0, rLM.bottom, rClient.right - (4 * (height / 12)), rClient.bottom);
+
+	input.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL, rI, this, 1402);
 	input.SetFont(&m_font);
 	CRect rS(rI.right, rI.top, rI.right + (height / 12),rI.bottom);
 	CRect rE(rS.right, rI.top, rS.right + (height / 12 ), rI.bottom);
@@ -80,7 +96,9 @@ BOOL CChatView::OnInitDialog()
 void CChatView::OnSendButtonClicked()
 {
 	input.GetWindowText(m_inputController); 
+	AfxMessageBox(m_inputController); 
 	APIHelper::SendMessageTo(this->GetSafeHwnd(), m_inputController);
+
 	input.SetWindowTextW(_T(""));
 }
 void CChatView::OnEmojiButtonClicked()
@@ -193,15 +211,14 @@ LRESULT CChatView::OnResponseSend(WPARAM wParam, LPARAM lParam)
 	// 2. Them Message vao LOCAL 
 	// 3. Them Message vao cache 
 	// 4. Chi them cac Message moi nay vao ListMessage, vi ListMessage da khoi tao roi 
-	CString* pResponse = (CString*)lParam;
-	std::string str_response = std::string(CT2A(*pResponse));
+	std::string* pResponse = reinterpret_cast<std::string*>(lParam);
 	nlohmann::json j; 
-	j = nlohmann::json::parse(str_response); 
+	j = nlohmann::json::parse(*pResponse); 
 	nlohmann::json tmp = j["data"]; 
 	std::string tmp_str = tmp.dump(); 
 	std::vector<Entities::Message> tmpVector; 
 
-	tmpVector = MessageHelper::Json2Message(tmp_str, this, user.friendId); 
+	tmpVector = MessageHelper::Json2Message(tmp_str, this, user.friendId, &m_font); 
 	MessageHelper::WaitResource(tmpVector); // Chac chan phai co tin nhan
 	// Ghi vao trong LOCAL 
 	DatabaseManager::GetInstance().InsertMessage(tmpVector); 
@@ -210,6 +227,7 @@ LRESULT CChatView::OnResponseSend(WPARAM wParam, LPARAM lParam)
 	SaveMessageIntoCache(tmpVector, false); 
 	
 	AddItemToListMessage(tmpVector); 
+	delete pResponse; 
 	return 0;
  
 }
@@ -219,13 +237,13 @@ void CChatView::OnSelChange()
 	int sel = listMessage.GetCurSel(); 
 	if (sel != LB_ERR)
 	{
-		Message* message = listMessage.GetMessageAt(sel);
-		if (message->type == 2)
+		Entities::Message* message = listMessage.GetMessageAt(sel);
+		if (message->type == 2 || message->type == 1)
 		{
 			//AfxMessageBox(message->text);
-			CString ext = PathFindExtension(message->text);   // .txt
+			CString ext = PathFindExtension(message->content);   // .txt
 			ext.TrimLeft('.');
-			CFileDialog dlg(FALSE, ext , message->text,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All Files (*.*)|*.*||"), this);
+			CFileDialog dlg(FALSE, ext , message->content,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All file (*.*)|*.*||"), this);
 			if (dlg.DoModal() == IDOK)
 			{
 				CString savePath = dlg.GetPathName();
@@ -233,7 +251,8 @@ void CChatView::OnSelChange()
 
 			}
 			
-		}
+		} 
+			
 	}
 }
 
@@ -241,26 +260,23 @@ void CChatView::ReceivedData(Entities::User userReceived )
 {
 	user = userReceived; 
 }
-LRESULT CChatView::OnResponseGetAllMessages(WPARAM wParam, LPARAM lParam)
+LRESULT CChatView::OnResponseGetAll(WPARAM wParam, LPARAM lParam)
 {
 	// ep lai kieu con tro
 	//CString* pFriendID = (CString*)pFriendID; // Su dung FriendID thi *pFriendID 
 
-	CString* pResponse = (CString*)lParam;
+	std::string* pResponse = reinterpret_cast<std::string*> (lParam) ;
 	std::vector<Entities::Message> allVector;
 	//// convert to TCHAR* to ANSI 
-	CString tmp = *pResponse;
-	CT2A converter(tmp);
-	std::string str(converter);
 	nlohmann::json j;
-	j = nlohmann::json::parse(str);
+	j = nlohmann::json::parse(*pResponse);
 	// Ket qua tra ve la 1 list cac json trong truong "Data"
 
 	std::vector<Entities::Message> tmpVector;
 	for (const auto& item : j["data"]) 
 	{
 		std::string param = item.dump();
-		tmpVector = MessageHelper::Json2Message(param, this, user.friendId); // tra ve 1 vector to, sau do them no vao vector chinh
+		tmpVector = MessageHelper::Json2Message(param, this, user.friendId, &m_font); // tra ve 1 vector to, sau do them no vao vector chinh
 		allVector.insert(allVector.end(), tmpVector.begin(), tmpVector.end()); 
 	}
 	
@@ -271,11 +287,11 @@ LRESULT CChatView::OnResponseGetAllMessages(WPARAM wParam, LPARAM lParam)
 
 	SaveMessageIntoCache(allVector, true);
 
-
+	delete pResponse;
 	return 0;
 }
 
-LRESULT CChatView::OnResponseGetLastMessages(WPARAM wParam, LPARAM lParam)
+LRESULT CChatView::OnResponseGetLast(WPARAM wParam, LPARAM lParam)
 {	
 	// Khong tin nhan moi: 
 	// Kiem tra trong cache 
@@ -297,19 +313,17 @@ LRESULT CChatView::OnResponseGetLastMessages(WPARAM wParam, LPARAM lParam)
 	//			1. Lay toan bo tin nhan tu LOCAL 
 	//			2. Luu vao trong cache
 
-	CString* pResponse = (CString*)lParam;
+	std::string* pResponse = reinterpret_cast<std::string*> (lParam); 
 
-	CT2A converter(*pResponse);
-	std::string str(converter);
 	nlohmann::json j; 
-	j = nlohmann::json::parse(str);
+	j = nlohmann::json::parse(*pResponse);
 	std::vector<Entities::Message> allVector;
 
 	std::vector<Entities::Message> tmpVector;
 	for (const auto& item : j["data"])
 	{
 		std::string param = item.dump();
-		tmpVector = MessageHelper::Json2Message(param, this, user.friendId); 
+		tmpVector = MessageHelper::Json2Message(param, this, user.friendId, &m_font); 
 		allVector.insert(allVector.end(), tmpVector.begin(), tmpVector.end()); 
 	}
 
@@ -326,6 +340,7 @@ LRESULT CChatView::OnResponseGetLastMessages(WPARAM wParam, LPARAM lParam)
 	//		- Khong co tin nhan moi
 
 	SaveMessageIntoCache(allVector, true); 
+	delete pResponse;
 	return 0;
 }
 
@@ -399,9 +414,10 @@ BEGIN_MESSAGE_MAP(CChatView, CDialogEx)
 	ON_BN_CLICKED(1404, &CChatView::OnEmojiButtonClicked)
 	ON_BN_CLICKED(1405, &CChatView::OnImageButtonClicked)
 	ON_BN_CLICKED(1406, &CChatView::OnFileButtonClicked)
-	ON_MESSAGE(WM_RESPONSE_ALL_MSG, &CChatView::OnResponseGetAllMessages)
-	ON_MESSAGE(WM_RESPONSE_LAST_MSG, &CChatView::OnResponseGetLastMessages)
+	ON_MESSAGE(WM_RESPONSE_ALL_MSG, &CChatView::OnResponseGetAll)
+	ON_MESSAGE(WM_RESPONSE_LAST_MSG, &CChatView::OnResponseGetLast)
 	ON_MESSAGE(WM_API_SEND, &CChatView::OnResponseSend)
+
 	ON_LBN_SELCHANGE(1401, &CChatView::OnSelChange)
 END_MESSAGE_MAP()
 

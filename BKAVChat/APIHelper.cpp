@@ -23,16 +23,33 @@ void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
 
 	APIRequest request;
 	request.path = _T("/api/message/send-message");
-	CStringA body; 
+	std::string body; 
+	//CStringA body; 
 	body = "--01112323232321382312938271372614432\r\n";
 	body += "Content-Disposition: form-data; name=\"FriendID\"\r\n\r\n";
-	body += CStringA(CT2A(GlobalParam::current)) + "\r\n"; 
-	request.body.insert(request.body.end(), (BYTE*)body.GetString(), (BYTE*)body.GetString() + body.GetLength());
+	//body += CT2A(GlobalParam::current, CP_UTF8) + "\r\n"; 
+	{
+		int len = ::WideCharToMultiByte(CP_UTF8, 0, GlobalParam::current, -1, nullptr, 0, nullptr, nullptr);
+		if (len > 0) {
+			std::string utf8(len - 1, 0);
+			::WideCharToMultiByte(CP_UTF8, 0, GlobalParam::current, -1, &utf8[0], len, nullptr, nullptr);
+			body += utf8 + "\r\n";
+		}
+	}
+	request.body.insert(request.body.end(), body.begin(), body.end());
 	body = "--01112323232321382312938271372614432\r\n";
 	body += "Content-Disposition: form-data; name=\"Content\"\r\n\r\n";
-	body += CStringA(CT2A(msg)) + "\r\n";
+	//body += CT2A(msg, CP_UTF8) + "\r\n";
+	{
+		int len = ::WideCharToMultiByte(CP_UTF8, 0, msg, -1, nullptr, 0, nullptr, nullptr);
+		if (len > 0) {
+			std::string utf8(len - 1, 0); // Bỏ null terminator
+			::WideCharToMultiByte(CP_UTF8, 0, msg, -1, &utf8[0], len, nullptr, nullptr);
+			body += utf8 + "\r\n";
+		}
+	}
 
-	request.body.insert(request.body.end(), (BYTE*)body.GetString(), (BYTE*)body.GetString() + body.GetLength());
+	request.body.insert(request.body.end(), body.begin(), body.end());
 	// Gui file
 	for (CString& link : GlobalParam::files)
 	{
@@ -51,7 +68,7 @@ void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
 		body += "Content-Disposition: form-data; name=\"files\"; filename=\"" + fileName + "\"\r\n";
 		body += contentType;
 		// Doc tung bit nhi phan cua file tu link
-		request.body.insert(request.body.end(), (BYTE*)body.GetString(), (BYTE*)body.GetString() + body.GetLength());
+		request.body.insert(request.body.end(), body.begin(), body.end());
 		CFile file; 
 		if (file.Open(link, CFile::modeRead | CFile::typeBinary ))
 		{
@@ -69,14 +86,14 @@ void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
 		}
 	}
 	body = "--01112323232321382312938271372614432--\r\n";
-	request.body.insert(request.body.end(), (BYTE*)body.GetString(), (BYTE*)body.GetString() + body.GetLength());
+	request.body.insert(request.body.end(), body.begin(), body.end());
 
 
 	
 	// Tao header 
 	CString header;
 	header.Format(_T("Authorization: Bearer %s\r\n"), GlobalParam::token.GetString()); 
-	header = header + _T("Content-Type: multipart/form-data; boundary=01112323232321382312938271372614432"); // boundary random
+	header = header + _T("Content-Type: multipart/form-data;charset=UTF-8;boundary=01112323232321382312938271372614432"); // boundary random
 	request.headers = header;
 	
 	request.hTargetHwnd = hTargetWnd;
@@ -250,8 +267,6 @@ void APIHelper::GetResource(HWND hTargetHwnd,CString url, CString saveUrl)
 	APIRequest request; 
 	request.method = _T("GET_RESOURCE");
 
-	// Neu yeu cau avatar phai chinh sua truoc khi goi APIHelper::GetResource
-
 	CString path = request.path;
 	request.path = _T("http://") + request.host + _T(":8888") + path + url;
 	request.headers = saveUrl;
@@ -340,15 +355,18 @@ void APIHelper::SendApi(APIRequest& request)
 		if (request.method == _T("GET_RESOURCE"))
 		{
 			URLDownloadToFile(NULL, request.path, request.headers, 0, NULL);
-			AfxMessageBox(_T("Tai xuong thanh cong")); 
+			CString noti; 
+			noti.Format(_T("Tai xuong thanh cong tai %s"), request.headers); 
+			AfxMessageBox(noti); 
 		} else
 	{
-		CString response;
+		std::string response;
 		CInternetSession session(_T("BKAVChat"));
 		CHttpConnection* pConnection = nullptr;
 		CHttpFile* pFile = nullptr;
 
-		CStringA utf8Data;
+		//CStringA utf8Data;
+		std::string utf8Data;
 		char buffer[4096];
 		UINT bytesRead = 0;
 
@@ -373,7 +391,7 @@ void APIHelper::SendApi(APIRequest& request)
 				buffer[bytesRead] = '\0';
 				utf8Data += buffer;
 			}
-			response = CA2W(utf8Data, CP_UTF8);
+			response = utf8Data;
 		}
 		catch (CInternetException* e) // Bat Exception bang con tro
 		{
@@ -383,18 +401,9 @@ void APIHelper::SendApi(APIRequest& request)
 		if (pConnection) delete pConnection;
 		session.Close();
 		//AfxMessageBox(response);
-		CString* pResponse = new CString(response);
+		//CString* pResponse = new CString(response);
+		std::string* pResponse = new std::string(response); 
 		//AfxMessageBox(_T("Nhan thong tin ")); 
-		::PostMessage(request.hTargetHwnd, request.messageId, 0, (LPARAM)pResponse);
+		::PostMessage(request.hTargetHwnd, request.messageId, 0, reinterpret_cast<LPARAM>(pResponse));
 	}
 }
-//bool APIHelper::IsQueueEmpty()
-//{
-//	std::lock_guard<std::mutex> lock(QueueMutex);  // Bảo vệ tránh race condition
-//	return ApiQueue.empty();
-//}
-//bool APIHelper::IsDownloading()
-//{
-//	std::lock_guard<std::mutex> lock(downloadingMutex); 
-//	return !downloading.empty();
-//}

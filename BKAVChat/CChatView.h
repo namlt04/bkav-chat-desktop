@@ -30,8 +30,8 @@ protected:
 	virtual BOOL OnInitDialog();
 	virtual void OnOK(); 
 	afx_msg void OnSendButtonClicked();
-	afx_msg LRESULT OnResponseGetAllMessages(WPARAM wParam, LPARAM lParam); 
-	afx_msg LRESULT OnResponseGetLastMessages(WPARAM wParam, LPARAM lParam); 
+	afx_msg LRESULT OnResponseGetAll(WPARAM wParam, LPARAM lParam); 
+	afx_msg LRESULT OnResponseGetLast(WPARAM wParam, LPARAM lParam); 
 	afx_msg void OnEmojiButtonClicked();
 
 	afx_msg void OnImageButtonClicked();
@@ -45,6 +45,7 @@ protected:
 
 	CEdit input;
 	CFont m_font;
+	CFont m_fontDownload; 
 	HICON m_hIcon; 
 	CString m_inputController;
 	CCButton m_sendButton;

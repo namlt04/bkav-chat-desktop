@@ -388,12 +388,14 @@ void CLoginView::OnTimer(UINT_PTR nIDEvent)
 LRESULT CLoginView::OnResponse(WPARAM wParam, LPARAM  lParam)
 {
 	// Chua thiêt lap UINT WM_LOGIN_RESPONSE 
-	CString* pResponse = (CString*)lParam; 
-	CT2A tmp(*pResponse);
-	std::string str = std::string(tmp);
+	AfxMessageBox(_T("Da nhan")); 
+	std::string* pResponse = reinterpret_cast<std::string*>(lParam);
+	//CString* pResponse = (CString*)lParam; 
+	//CT2A tmp(*pResponse);
+	//std::string str = std::string(tmp);
 
 	nlohmann::json j;
-	j = nlohmann::json::parse(str);
+	j = nlohmann::json::parse(*pResponse);
 	if (j["status"] == 1)
 	{
 		// Luu config

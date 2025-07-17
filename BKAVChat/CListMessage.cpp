@@ -5,13 +5,16 @@
 
 
 BEGIN_MESSAGE_MAP(CListMessage, CListBox)
+    ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 CListMessage::CListMessage() {}
 
 CListMessage::~CListMessage() {}
 
-BOOL CListMessage::Create(const CRect& rect, CWnd* pParent, UINT nId) {
+BOOL CListMessage::Create(const CRect& rect, CWnd* pParent, UINT nId, CFont* font, CFont* fontDownload) {
+    m_font = font; 
+    m_fontDownload = fontDownload; 
     return CListBox::Create(WS_CHILD | WS_VISIBLE | LBS_OWNERDRAWVARIABLE |  WS_VSCROLL | LBS_HASSTRINGS | LBS_NOTIFY, rect, pParent, nId);
 }
 
@@ -32,6 +35,8 @@ void CListMessage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) {
     {
         return;
     }
+   
+
     CRect rc = lpDrawItemStruct->rcItem;
 
     Entities::Message item = vt[itemIndex];
@@ -42,7 +47,8 @@ void CListMessage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) {
     CRect cRect;
     int padding = 5;
     int d = 5; 
-    
+   
+    CFont* pOldFont = pDC->SelectObject(m_font); 
     
     // WIDTH X HEIGHT = 800 X 600 
     // Item height : kich thuoc thuc te + kich thuoc padding + kich thuoc d , 
@@ -53,7 +59,7 @@ void CListMessage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) {
         colorBg = GlobalParam::colorYou;
         colorText = GlobalParam::colorYouText;
 
-        rDraw.left = rc.left + d;
+        rDraw.left = rc.left + d + ( (rc.Width() / 20));
         rDraw.top = rc.top + d;
         rDraw.right = rDraw.left + item.width - ( 2 * d );
         rDraw.bottom = rDraw.top + item.height - ( 2 * d );
@@ -70,12 +76,13 @@ void CListMessage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) {
         colorText = GlobalParam::colorMeText;
         rDraw.right = rc.right - d; 
         rDraw.top = rc.top + d;
-        rDraw.left = rDraw.right - item.width - ( 2 * d);
-        rDraw.bottom = rDraw.top + item.height - (2 * d );
+        rDraw.left = rc.right - item.width + d ;
+        rDraw.bottom = rc.bottom - d;
 
 
 
         // phu thuoc vao rDraw
+        // cRect : khung de ve chu, hoac cac phan noi dung 
         cRect.right = rDraw.right - padding ;
         cRect.top = rDraw.top + padding;
         cRect.left = rDraw.left + padding;
@@ -128,9 +135,24 @@ void CListMessage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) {
     else if (item.type == 2)
     {
 
-        //HICON hIcon = AfxGetApp()->LoadIconW(IDC_ICON);
+        HICON hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
         //pDC->DrawIcon(rDraw.left, rDraw.top, hIcon);
-        pDC->DrawText(item.content, CRect(cRect.left + 5 + 32, cRect.top, cRect.right, cRect.bottom), DT_SINGLELINE | DT_WORD_ELLIPSIS);
+        pDC->SelectObject(m_fontDownload);
+        ::DrawIconEx(pDC->GetSafeHdc(), cRect.left, cRect.top, hIcon, item.height - 20 , item.height - 20, 0, NULL, DI_NORMAL); 
+        pDC->DrawText(item.content, CRect(cRect.left + (6 * ((item.height - 20) / 5 ) ) , cRect.top, cRect.right,cRect.bottom),DT_WORD_ELLIPSIS);
+    }
+    pDC->SelectObject(m_font); 
+
+    int nextItemIndex = itemIndex + 1;  // ->>>>>>>>>
+    if (nextItemIndex < 0 || nextItemIndex >= vt.size())
+    {
+        return;
+    }
+    Entities::Message nextItem = vt[nextItemIndex];
+    if (nextItem.messageType == 1 && item.messageType == 0)
+    {
+        HICON hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+        ::DrawIconEx(pDC->GetSafeHdc(), cRect.left, cRect.top, hIcon, (rc.Width() / 25), (rc.Width() / 25), 0, NULL, DI_NORMAL);
     }
 }
 
@@ -139,19 +161,34 @@ void CListMessage::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) {
 
 void CListMessage::MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct) {
     int index = lpMeasureItemStruct->itemID;
-    if (index >= 0 && index < vt.size()) {
+    if (index >= 0 && index < vt.size()) 
+    {
         lpMeasureItemStruct->itemHeight = vt[index].height;
-        /*CString form; 
-        form.Format(_T("%d"), vt[index].height); 
-        AfxMessageBox(form);*/
     }
-    else {
+    else 
+    {
         lpMeasureItemStruct->itemHeight = 30;
     }
 }
-Message* CListMessage::GetMessageAt(int sel)
+Entities::Message* CListMessage::GetMessageAt(int sel)
 {
     if ( sel >= 0 && sel < vt.size())
-        //return vt[sel];
+        return &vt[sel];
     return nullptr;
 }
+
+
+void CListMessage::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    BOOL bOutside = TRUE;
+    int nIndex = ItemFromPoint(point, bOutside );
+
+    if (!bOutside &&nIndex != LB_ERR)
+    {
+        SetCurSel(nIndex); 
+        GetParent()->SendMessage(WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(), LBN_SELCHANGE), (LPARAM)m_hWnd);
+    }
+
+
+    CListBox::OnLButtonDown(nFlags, point); 
+} 
