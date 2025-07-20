@@ -32,7 +32,7 @@ public:
 	static CString token;
 	static CString me;
 	static CString current;
-	static std::vector<CString> files;
+	//static std::vector<CString> files;
 	static std::map<CString, std::vector<Entities::Message>> messages;
 	static std::queue<CString> queueKey; // luu tru key
 	static COLORREF colorMe;

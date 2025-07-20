@@ -9,6 +9,8 @@
 #include <vector>
 #include "CEmojiPicker.h"
 #include "CCButton.h"
+#include "CListMessage.h"
+#include "CFilePicker.h"
 // CChatView dialog
 
 class CChatView : public CDialogEx
@@ -19,13 +21,17 @@ public:
 	CChatView(CWnd* pParent = nullptr);   // standard constructor
 	virtual ~CChatView();
 	void ReceivedData(Entities::User userReceived); 
-	void EmojiHandle(UINT sel);
+	void EmojiHandle(CString emoji);
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CHATVIEW };
 #endif
 
-protected:
+
+ protected:
+	  
+	afx_msg LRESULT CloseFilePicker(WPARAM wParam, LPARAM lParam);
+	 //LRESULT UpdateScreen(WPARAM wParam, LPARAM lParam); 
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();
 	virtual void OnOK(); 
@@ -36,13 +42,18 @@ protected:
 
 	afx_msg void OnImageButtonClicked();
 	afx_msg void OnFileButtonClicked();
-	afx_msg void OnSelChange();
+	afx_msg void OnPaint(); 
+	afx_msg BOOL CChatView::OnEraseBkgnd(CDC* pDC);
 	afx_msg LRESULT OnResponseSend(WPARAM wParam, LPARAM lParam); 
+	afx_msg LRESULT OnClickDownloadFile(WPARAM wParam, LPARAM lParam);
 	void SaveMessageIntoCache(std::vector<Entities::Message> vt, bool isCreate); 
 	void AddItemToListMessage(std::vector<Entities::Message>& vt); 
+	CRect rInput; // input + send; 
 	Entities::User user; 
+
 	CListMessage listMessage;
 
+	
 	CEdit input;
 	CFont m_font;
 	CFont m_fontDownload; 
@@ -52,7 +63,13 @@ protected:
 	CCButton m_emojiButton; 
 	CCButton m_imageButton; 
 	CCButton m_fileButton;
-	
-	CEmojiPicker* m_pEmojiPicker;
+	CFilePicker m_list; 
+	CEmojiPicker* pEmojiPicker;
+
+
+	HICON m_hSend; 
+	HICON m_hPhoto;
+	HICON m_hAttach; 
+	HICON m_hEmoji; 
 	DECLARE_MESSAGE_MAP()
 };

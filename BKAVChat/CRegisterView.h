@@ -31,7 +31,7 @@ protected:
 	afx_msg HBRUSH OnCtlColor(CDC* pDc, CWnd* pWnd, UINT nColor);
 
 	CCButton sign_up_button;
-
+	HICON m_hIcon; 
 	CFont m_fontLogo; 
 	CFont m_fontText; 
 	CFont m_fontTextInput;

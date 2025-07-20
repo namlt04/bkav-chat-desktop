@@ -190,10 +190,11 @@
     <ClInclude Include="CChatView.h" />
     <ClInclude Include="CEmojiPicker.h" />
     <ClInclude Include="CHomeView.h" />
+    <ClInclude Include="CFilePicker.h" />
     <ClInclude Include="CListFriend.h" />
-    <ClInclude Include="CListMessage.h" />
     <ClInclude Include="CLoginView.h" />
     <ClInclude Include="CRegisterView.h" />
+    <ClInclude Include="CListMessage.h" />
     <ClInclude Include="DatabaseManager.h" />
     <ClInclude Include="Entities.h" />
     <ClInclude Include="FileManager.h" />
@@ -215,10 +216,11 @@
     <ClCompile Include="CChatView.cpp" />
     <ClCompile Include="CEmojiPicker.cpp" />
     <ClCompile Include="CHomeView.cpp" />
+    <ClCompile Include="CFilePicker.cpp" />
     <ClCompile Include="CListFriend.cpp" />
-    <ClCompile Include="CListMessage.cpp" />
     <ClCompile Include="CLoginView.cpp" />
     <ClCompile Include="CRegisterView.cpp" />
+    <ClCompile Include="CListMessage.cpp" />
     <ClCompile Include="DatabaseManager.cpp" />
     <ClCompile Include="FIleManager.cpp" />
     <ClCompile Include="GlobalParam.cpp" />
@@ -241,6 +243,19 @@
     <None Include="res\BKAVChat.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\..\..\..\Downloads\icon\add.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\attach.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\avatar.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\bkav.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\close.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\emoji.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\file_attach.ico" />
+    <Image Include="..\..\..\..\..\..\downloads\icon\icon2.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\photo.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\receive.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\search.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\seen.ico" />
+    <Image Include="..\..\..\..\..\..\Downloads\icon\send.ico" />
     <Image Include="res\BKAVChat.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

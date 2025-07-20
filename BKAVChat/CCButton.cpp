@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CCButton.h"
 
 
@@ -7,14 +7,12 @@ BEGIN_MESSAGE_MAP(CCButton, CButton)
 	ON_WM_MOUSEMOVE()
 	ON_MESSAGE(WM_MOUSELEAVE, &CCButton::OnMouseLeave)
 END_MESSAGE_MAP();
-//void CCButton::TrackingText()
-//{
-//
-//}
+
 BOOL CCButton::Create(LPCTSTR lpText,CRect rect,CWnd* pParent, UINT nId, CFont* font,bool style)
 {
 	m_font = font; 
 	m_style = style; 
+	m_styleIcon = 0; 
 	m_colorText = RGB(255, 255, 255);
 	m_colorNormal = RGB(28, 127, 217);
 	m_colorPressed = RGB(38, 123, 200);
@@ -24,16 +22,39 @@ BOOL CCButton::Create(LPCTSTR lpText,CRect rect,CWnd* pParent, UINT nId, CFont* 
 }
 
 
-BOOL CCButton::Create(HICON* hIcon, CRect rect, CWnd* pParent, UINT nId)
+BOOL CCButton::Create(LPCTSTR lpText, HICON* hIcon, CRect rect, CWnd* pParent, UINT nId,UINT style)
 {
-	// Button Icon
+ 
+	m_styleIcon = style;
+	
+
+	if (m_styleIcon == 3)
+	{
+		m_font = new CFont();
+		m_font->CreateFont(
+			64 ,                    // Chiều cao font (pixel)
+			0,                     // Chiều rộng (0 = tự tính)
+			0, 0,                  // Escapement, Orientation
+			FW_NORMAL,               // Đậm
+			FALSE,                 // Italic
+			FALSE,                 // Underline
+			0,                     // Strikeout
+			ANSI_CHARSET,          // Charset (dùng ANSI nếu không cần Unicode đặc biệt)
+			OUT_DEFAULT_PRECIS,
+			CLIP_DEFAULT_PRECIS,
+			DEFAULT_QUALITY,
+			DEFAULT_PITCH | FF_DONTCARE,
+			_T("Segoe UI")         // Tên font
+		);
+	}
+
 	 
 	m_hIcon = hIcon; 
 	//m_colorNormal = RGB(255, 255, 255);
 	m_colorNormal = ::GetSysColor(COLOR_BTNFACE);
 	m_colorPressed = RGB(255, 255, 255); 
 	m_colorCurrent = m_colorNormal;
-	return CButton::Create(_T(""), WS_VISIBLE | WS_CHILD | BS_OWNERDRAW, rect, pParent, nId);
+	return CButton::Create(lpText, WS_VISIBLE | WS_CHILD | BS_OWNERDRAW, rect, pParent, nId);
 }
 
 
@@ -43,16 +64,19 @@ void CCButton::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CRect rect = lpDrawItemStruct->rcItem;
 	CBrush brush(m_colorCurrent);
 	CBrush* pOldBrush;
-	if (m_hIcon)
+	if (m_styleIcon != 0 )
 	{
 		CPen pen(PS_NULL, 0, m_colorCurrent);
 		CPen* pOldPen = pDC->SelectObject(&pen);
-		pOldBrush = pDC->SelectObject(&brush); 
-		//rect.InflateRect(rect.Width() / 6, rect.Width() / 6); 
-		pDC->Ellipse(&rect);
+		pOldBrush = pDC->SelectObject(&brush);
+		if (m_styleIcon == 1 || m_styleIcon == 3) 
+		{
+			pDC->Ellipse(&rect);
+			rect.DeflateRect(rect.Width() / 6 , rect.Width() / 6); 
+		}
+		if (m_styleIcon == 1 || m_styleIcon == 2)
+			::DrawIconEx(pDC->GetSafeHdc(), rect.left, rect.top, *m_hIcon, rect.Width(), rect.Height(), 0, NULL, DI_NORMAL);
 
-		rect.DeflateRect(rect.Width() / 6, rect.Width() / 6); 
-		::DrawIconEx(pDC->GetSafeHdc(), rect.left, rect.top, *m_hIcon, rect.Width(), rect.Height(), 0, NULL, DI_NORMAL);
 		pDC->SelectObject(pOldPen);
 	}
 	else

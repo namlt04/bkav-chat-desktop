@@ -46,6 +46,7 @@ std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWn
 		message.height = rect.Height() + 20;
 		message.width = rect.Width() + 20;
 		message.messageType = item["MessageType"];
+		message.isSend = item["isSend"]; 
 		tmp = item["CreatedAt"];
 		message.time = CString(CA2T(tmp.c_str()));
 		if ( !message.content.IsEmpty())
@@ -76,6 +77,7 @@ std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWn
 			tmp = item["CreatedAt"];
 			message.time = CString(CA2T(tmp.c_str()));
 			message.messageType = item["MessageType"];
+			message.isSend = item["isSend"]; 
 			ret.push_back(message);
 		}
 	}
@@ -108,6 +110,7 @@ std::vector<Entities::Message> MessageHelper::Json2Message(std::string data, CWn
 			tmp = item["CreatedAt"];
 			message.time = CString(CA2T(tmp.c_str()));
 			message.messageType = item["MessageType"];
+			message.isSend = item["isSend"]; 
 			ret.push_back(message); 
 		}
 
@@ -158,5 +161,11 @@ void MessageHelper::AdjustmentSize(Entities::Message& message)
 		message.height = image.GetHeight() + 20;
 		message.width = image.GetWidth() + 20;
 	}
+}
+CTime MessageHelper::Convert2CTime(CString str)
+{
+	int year, month, day, hour, minute, second; 
+	_stscanf_s(str, _T("%d-%d-%dT%d:%d:%dZ"), &year, &month, &day, &hour, &minute, &second); 
+	return CTime(year, month, day, hour, minute, second); 
 }
 

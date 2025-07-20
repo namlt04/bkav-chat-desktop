@@ -12,10 +12,19 @@
 #define IDD_HOMEVIEW                    130
 #define IDD_CHATVIEW                    131
 #define IDI_ICON1                       142
-#define IDI_AVATAR                      142
-#define IDD_DIALOG1                     143
-#define IDD_EMOJIPICKER                 143
-#define IDC_CHECK                       1000
+#define IDI_ATTACH                      147
+#define IDI_SEND                        148
+#define IDI_EMOJI                       149
+#define IDI_PHOTO                       150
+#define IDI_ADD                         151
+#define IDI_FILEATTACH                  153
+#define IDI_CLOSE                       154
+#define IDI_AVATAR                      155
+#define IDD_EMOJIPICKER                 156
+#define IDI_SEARCH                      158
+#define IDI_BKAV                        159
+#define IDI_RECEIVE                     160
+#define IDI_SEEN                        161
 #define IDC_USERNAME_SIV                1001
 #define IDC_PASSWORD_SIV                1002
 #define IDC_STA_USERNAME_SIV            1004
@@ -35,7 +44,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        145
+#define _APS_NEXT_RESOURCE_VALUE        162
 #define _APS_NEXT_COMMAND_VALUE         32771
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101

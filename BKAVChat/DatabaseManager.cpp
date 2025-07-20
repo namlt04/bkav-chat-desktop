@@ -16,14 +16,15 @@ DatabaseManager& DatabaseManager::GetInstance()
 }
 
 
-bool DatabaseManager::Connect()
+bool DatabaseManager::Connect(BOOL isDropDb)
 {
 	if (m_db != nullptr)
 		return true; 
-	CFileStatus status;
-	bool isNewFile = !CFile::GetStatus(FileManager::m_databasePath, CFileStatus());
+	if (!isDropDb)
+		if ( ::GetFileAttributes(FileManager::m_databasePath) != INVALID_FILE_ATTRIBUTES)
+			CFile::Remove(FileManager::m_databasePath);
 	int result = sqlite3_open(CW2A(FileManager::m_databasePath), &m_db);
-	if (isNewFile)
+	if (result == SQLITE_OK)
 	{
 		const char* query =
 			"CREATE TABLE IF NOT EXISTS synced_friend ("
@@ -39,11 +40,12 @@ bool DatabaseManager::Connect()
 			" time TEXT,"
 			" width integer default 0 ,"
 			" height integer default 0, "
-			" messageType integer"
-			
+			" messageType integer, "
+			" isSend integer"
+
 			");";
 
-		int rc = sqlite3_exec(m_db, query, 0, 0, nullptr); 
+		int rc = sqlite3_exec(m_db, query, 0, 0, nullptr);
 	}
 
 	return true;
@@ -67,7 +69,7 @@ std::vector<Entities::Message> DatabaseManager::GetMessageFromLocal(CString frie
 	
 	std::vector<Entities::Message> ret;
 	// them trường freindID
-	const char* sql = "select type, content, link, time , width, height, messageType from messages where friendId = ? order by datetime(time) asc, id asc;";
+	const char* sql = "select type, content, link, time , width, height, messageType, isSend from messages where friendId = ? order by datetime(time) asc, id asc;";
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(m_db, sql, -1, &stmt, nullptr) == SQLITE_OK)
 	{
@@ -77,12 +79,13 @@ std::vector<Entities::Message> DatabaseManager::GetMessageFromLocal(CString frie
 			{
 				Entities::Message msg; 
 				msg.type = sqlite3_column_int(stmt, 0); 
-				msg.content = CString(CA2T((const char*)(sqlite3_column_text(stmt, 1))));
-				msg.link = CString(CA2T((const char*)(sqlite3_column_text(stmt, 2))));
-				msg.time = 	CString(CA2T((const char*)(sqlite3_column_text(stmt, 3)))) ; 
+				msg.content = CString(CA2T((const char*)(sqlite3_column_text(stmt, 1)), CP_UTF8));
+				msg.link = CString(CA2T((const char*)(sqlite3_column_text(stmt, 2)), CP_UTF8));
+				msg.time = 	CString(CA2T((const char*)(sqlite3_column_text(stmt, 3)), CP_UTF8)) ; 
 				msg.width = sqlite3_column_int(stmt, 4);
 				msg.height = sqlite3_column_int(stmt, 5);
 				msg.messageType = sqlite3_column_int(stmt, 6);
+				msg.isSend = sqlite3_column_int(stmt, 7);
 
 				ret.push_back(msg); 
 			}
@@ -127,26 +130,27 @@ BOOL DatabaseManager::UpdateLastSynced(CString friendId, CString lastSynced)
 }
 BOOL DatabaseManager::InsertMessage(std::vector<Entities::Message> vt)
 {
-	const char* query = "insert into messages(friendId,type, content, link, time, width, height, messageType) values(?,?,?,?,?,?,?,? ); ";
+	const char* query = "insert into messages(friendId,type, content, link, time, width, height, messageType, isSend) values(?,?,?,?,?,?,?,?,? ); ";
 	sqlite3_stmt* stmt = nullptr;
 	if (sqlite3_prepare_v2(m_db, query, -1, &stmt, nullptr) != SQLITE_OK)
 		return FALSE;
 	for (Entities::Message& msg : vt)
 	{	
 		sqlite3_clear_bindings(stmt); 
-		CStringA friendIdA(msg.friendId); 
-		CStringA contentA(msg.content);
-		CStringA linkA(msg.link);
-		CStringA timeA(msg.time);
-		sqlite3_bind_text(stmt, 1, friendIdA, -1, SQLITE_TRANSIENT);
+		CW2A friendUtf8(msg.friendId, CP_UTF8); 
+		CW2A contentUtf8(msg.content, CP_UTF8); 
+		CW2A linkUtf8(msg.link, CP_UTF8); 
+		CW2A timeUtf8(msg.time, CP_UTF8); 
+		sqlite3_bind_text(stmt, 1, friendUtf8, -1, SQLITE_TRANSIENT);
 		sqlite3_bind_int(stmt, 2, msg.type); 
-		sqlite3_bind_text(stmt, 3, contentA,-1, SQLITE_TRANSIENT);
-		sqlite3_bind_text(stmt, 4, linkA, -1, SQLITE_TRANSIENT);
-		sqlite3_bind_text(stmt, 5, timeA ,-1, SQLITE_TRANSIENT);
+		sqlite3_bind_text(stmt, 3, contentUtf8,-1, SQLITE_TRANSIENT);
+		sqlite3_bind_text(stmt, 4, linkUtf8, -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text(stmt, 5, timeUtf8 ,-1, SQLITE_TRANSIENT);
 
 		sqlite3_bind_int(stmt, 6, msg.width); 
 		sqlite3_bind_int(stmt, 7, msg.height); 
 		sqlite3_bind_int(stmt, 8, msg.messageType); 
+		sqlite3_bind_int(stmt, 9, msg.isSend); 
 		if (sqlite3_step(stmt) != SQLITE_DONE)
 			return FALSE; 
 

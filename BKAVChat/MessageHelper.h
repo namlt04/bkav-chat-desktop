@@ -14,5 +14,6 @@ public:
 	static std::vector<Entities::Message> Json2Message(std::string data, CWnd* cWnd,CString friendId, CFont* font); 
 	static void AdjustmentSize(Entities::Message& message);
 	static void WaitResource(std::vector<Entities::Message>& param);
+	static CTime Convert2CTime(CString str);
 };
 

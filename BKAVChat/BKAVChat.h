@@ -28,8 +28,10 @@ public:
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
 // Implementation
-
+	CWinThread* pNetworkThread;
+	
 	DECLARE_MESSAGE_MAP()
 };
 
 extern CBKAVChatApp theApp;
+extern volatile bool stopThread;

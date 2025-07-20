@@ -8,6 +8,7 @@
 #include "GlobalParam.h"
 #include "FileManager.h"
 #include "DatabaseManager.h"
+#include <vector>
 struct APIRequest {
 	CString method;
 	CString host;
@@ -45,7 +46,7 @@ public:
 	static void GetMessageFromServer(HWND hTargetWnd, CString FriendID); // tao cac api
 	static void GetLastMessage(HWND hTargetWnd, CString FriendID, CString LastTime); // tao cac api
 
-	static void SendMessageTo(HWND hTargetWnd, CString msg);
+	static void SendMessageTo(HWND hTargetWnd, CString msg, std::vector<Entities::Attach>* paths);
 	static void GetFriend(HWND hTargetWnd);
 	static void GetResource(HWND hTargetWnd, CString url, CString saveUrl); 
 	static void UpdateInformation(HWND hTargetWnd, const CString& fullname, const CString& avatar); 
@@ -59,11 +60,12 @@ public:
 	// mot ham de khoi tao ,
 	// ham de queue luon tu hoat dong 
 	static UINT NetworkThreadHandle(LPVOID pParam);
+	static std::condition_variable QueueCV;
 private:
 	static std::queue<APIRequest> ApiQueue;
 	static std::mutex QueueMutex; 
 	// luôn lock mutex khi truy cap
-	static std::condition_variable QueueCV;
+
 	// Đánh thức thread nền khi có request mới trong queue
 	static bool StopThread;
 

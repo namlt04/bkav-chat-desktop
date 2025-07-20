@@ -1,6 +1,5 @@
 #pragma once
-
-#include "sqlite3.h"
+#include <string>
 class FileManager
 {
 
@@ -8,7 +7,7 @@ public :
 	static bool InitConfig();
 	static CString ReadConfig();
 	static BOOL Init();
-	static BOOL DefaultConfig();
+	static BOOL DefaultConfig(std::string username);
 	static BOOL SaveConfig(CString username, CString password, bool remember);
  
 	static CString m_path; 

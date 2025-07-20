@@ -5,7 +5,7 @@
 CString GlobalParam::token = _T("");
 CString GlobalParam::me = _T("admin");
 CString GlobalParam::current = _T("");
-std::vector<CString> GlobalParam::files;
+//std::vector<CString> GlobalParam::files;
 COLORREF GlobalParam::colorMe = RGB(67, 127, 236);
 
 COLORREF GlobalParam::colorYou = RGB(218, 218, 218);

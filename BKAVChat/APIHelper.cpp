@@ -3,6 +3,7 @@
 #include "CHomeView.h"
 #include "WindowMessageCustome.h"
 #include <atlpath.h>
+#include "BKAVChat.h"
 // Khoi tao
 std::queue<APIRequest> APIHelper::ApiQueue;
 std::mutex APIHelper::QueueMutex;
@@ -10,13 +11,10 @@ std::condition_variable APIHelper::QueueCV;
 
 
 
-//std::queue<bool> APIHelper::downloading;
-//std::mutex APIHelper::downloadingMutex;
-//std::condition_variable APIHelper::downloadingQueueCV; 
 bool APIHelper::StopThread = false;
 
 
-void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
+void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg, std::vector<Entities::Attach>* paths)
 {
 	// parameter : message 
 	// 0 la hinh anh, 1 la file
@@ -51,9 +49,9 @@ void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
 
 	request.body.insert(request.body.end(), body.begin(), body.end());
 	// Gui file
-	for (CString& link : GlobalParam::files)
+	for (Entities::Attach& link : (*paths))
 	{
-		CPath path(link); 
+		CPath path(link.path); 
 		CStringA contentType = "";
 		CString ext = path.GetExtension();
 		//AfxMessageBox(ext); 
@@ -63,14 +61,14 @@ void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
 			contentType = "Content-Type: image/jpeg\r\n\r\n";
 		else 
 			contentType = "Content-Type: application/octet-stream\r\n\r\n";
-		CStringA fileName = CStringA(PathFindFileName(link));
+		CStringA fileName = CStringA(PathFindFileName(link.path));
 		body = "--01112323232321382312938271372614432\r\n";
 		body += "Content-Disposition: form-data; name=\"files\"; filename=\"" + fileName + "\"\r\n";
 		body += contentType;
 		// Doc tung bit nhi phan cua file tu link
 		request.body.insert(request.body.end(), body.begin(), body.end());
 		CFile file; 
-		if (file.Open(link, CFile::modeRead | CFile::typeBinary ))
+		if (file.Open(link.path, CFile::modeRead | CFile::typeBinary ))
 		{
 			const UINT bufsize = 4096;
 			BYTE  buffer[bufsize]; 
@@ -99,7 +97,6 @@ void APIHelper::SendMessageTo(HWND hTargetWnd, CString msg)
 	request.hTargetHwnd = hTargetWnd;
 	request.messageId = WM_API_SEND;	// Đưa vào trong queue
 	//AfxMessageBox(_T("Da gui vao trong queue"));
-	GlobalParam::files.clear();
 	ApiQueue.push(request); 
 	QueueCV.notify_one();
 
@@ -291,7 +288,7 @@ void APIHelper::AutoGetResource(HWND hTargetHwnd, CString url)
 
 UINT APIHelper::NetworkThreadHandle(LPVOID pParam)
 {
-	while (true)
+	while (!stopThread)
 	{
 		APIRequest request;
 		bool hasRequest = false;
@@ -300,9 +297,10 @@ UINT APIHelper::NetworkThreadHandle(LPVOID pParam)
 
 			if (ApiQueue.empty())
 			{
-				QueueCV.wait_for(lock, std::chrono::seconds(1));
-
+				//QueueCV.wait_for(lock, std::chrono::seconds(1));
+				QueueCV.wait_for(lock, std::chrono::seconds(1), [] { return stopThread || !ApiQueue.empty(); });
 			}
+			if (stopThread) break;
 			if (!ApiQueue.empty())
 			{
 				request = ApiQueue.front();

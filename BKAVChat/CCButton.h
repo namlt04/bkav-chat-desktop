@@ -5,7 +5,7 @@ class CCButton :
 {
 public :
     BOOL Create(LPCTSTR lpStr, CRect rect, CWnd* pParent, UINT nId, CFont* font, bool style);
-    BOOL Create(HICON* hIcon, CRect rect, CWnd* pParent, UINT nId); 
+    BOOL Create(LPCTSTR lpText, HICON* hIcon, CRect rect, CWnd* pParent, UINT nId, UINT style); 
 protected:
     afx_msg void OnMouseMove(UINT nFlags, CPoint point); 
 
@@ -22,6 +22,7 @@ protected:
 
     COLORREF m_colorText;
     bool m_style; 
+    UINT m_styleIcon; 
     CBrush* m_backgroundBrush = CBrush::FromHandle(::GetSysColorBrush(COLOR_BTNFACE));
     DECLARE_MESSAGE_MAP()
 

@@ -22,12 +22,12 @@ END_MESSAGE_MAP()
 
 
 // CBKAVChatApp construction
-
+volatile bool stopThread = false;
 CBKAVChatApp::CBKAVChatApp()
 {
 	// support Restart Manager
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
-
+	
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
 }
@@ -73,8 +73,11 @@ BOOL CBKAVChatApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("BKAV CHAT APP - BKAV CORP"));
 	FileManager::Init();
-	DatabaseManager::GetInstance().Connect(); 
-	AfxBeginThread(APIHelper::NetworkThreadHandle, this);
+
+
+
+
+	pNetworkThread = AfxBeginThread(APIHelper::NetworkThreadHandle, this);
 	CLoginView dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)

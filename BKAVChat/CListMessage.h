@@ -1,29 +1,41 @@
 #pragma once
-#include <afxcmn.h>
-#include <vector>
-#include "GlobalParam.h"
+#include <afxwin.h>
+#include <deque>
 #include "Entities.h"
+#include "GlobalParam.h"
 #include "resource.h"
-class CListMessage : public CListBox
-
+#include "MessageHelper.h"
+class CListMessage :
+    public CWnd
 {
-    //
 public:
-    CListMessage();
-    virtual ~CListMessage();
-    BOOL Create(const CRect& rect, CWnd* pParent, UINT nId, CFont* font, CFont* fontDownload);
-    void AddItem(Entities::Message message);
-    Entities::Message* GetMessageAt(int sel);
-protected:
-    CFont* m_font; 
-    CFont* m_fontDownload; 
-    std::vector<Entities::Message> vt;
-    afx_msg void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
-    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    CListMessage(); 
+    ~CListMessage(); 
+    BOOL Create(CRect rect, CWnd* pParent,UINT nID , CFont* font, CFont* fontDownload); 
+    void PushBackItem(Entities::Message message);
+    void PushFrontItem(Entities::Message message);
+    void UpdateScrollBar(bool isScrollDown);
+    BOOL SetScrollDown();
+    Entities::Message GetMessageAtSel(int index); 
+
+protected: 
+
+    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+    afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point); 
+    afx_msg void OnPaint();
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    void PaintMessage(CDC* dc, Entities::Message& msg, int nIndex, CRect& rc, int& y);
 
 
-    
-    
-    DECLARE_MESSAGE_MAP()
+
+    std::deque<Entities::Message> d_msg; 
+    int  m_scrollPos;
+    bool m_firstInitialize; 
+    int m_currentTotalHeight = 0;
+    CFont* m_font;
+    CFont* m_fontDownload;
+    DECLARE_MESSAGE_MAP(); 
+
 };
+

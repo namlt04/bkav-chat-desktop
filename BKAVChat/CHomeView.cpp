@@ -12,7 +12,7 @@ IMPLEMENT_DYNAMIC(CHomeView, CDialogEx)
 CHomeView::CHomeView(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_HOMEVIEW, pParent)
 {
-
+	m_hIcon = AfxGetApp()->LoadIconW(IDI_BKAV); 
 }
 
 CHomeView::~CHomeView()
@@ -29,18 +29,9 @@ BOOL CHomeView::OnInitDialog()
 	CDialog::OnInitDialog();
 	this->SetWindowPos(NULL, 0, 0, 800, 600, SWP_NOMOVE | SWP_NOZORDER);
 	this->SetWindowTextW(_T("BKAV Chat - Trang chủ")); 
-
-	//for (Friend& f : GlobalParam::friends)
-	//{
-		//CString str = f.username.GetString();
-		//listFriend.AddItem(/*str, hIcon*/);
-	//}
 	
-	//AfxMessageBox(_T("OnInitDialgo đã được gọi ")); 
-	//InitializeData(); 
-	// Chua su dung toi database
-	//DatabaseManager::InitDatabase();
-	//sqlite3* pDb = DatabaseManager::GetDB();
+	SetIcon(m_hIcon, TRUE); 
+	SetIcon(m_hIcon, FALSE);
 	InitUI(); 
 	//InitializeData(); 
 	PostMessage(WM_INITDATA); 
@@ -111,9 +102,9 @@ void CHomeView::InitUI()
 	m_searchBar.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT, rSB, this, 1302);
 	m_searchBar.SetFont(&m_fontTextInput);
 
-	m_hiSearch = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+	m_hiSearch = AfxGetApp()->LoadIconW(IDI_SEARCH);
 	CRect rSBu(9 * (width / 10) - (height / 15), rSB.top, 9 * (width / 10), rSB.bottom); // rect Search Button
-	m_cbSearch.Create(&m_hiSearch, rSBu, this, 1303);
+	m_cbSearch.Create(_T(""),  & m_hiSearch, rSBu, this, 1303, 1);
 
 
 	// 
@@ -131,26 +122,7 @@ void CHomeView::InitUI()
 void CHomeView::OnSelChangeListFriend()
 {
 	int sel = listFriend.GetCurSel(); 
-	//if (sel != LB_ERR)
-	//{
-	//	CString friendId = listFriend.GetUser(sel).friendId; 
-
-	//	if (GlobalParam::messages.find(friendId) != GlobalParam::messages.end())
-	//	{
-	//		CString time = GlobalParam::messages[friendId].back().time;
-	//		APIHelper::GetLastMessage(this->GetSafeHwnd(), friendId, time);
-	//	}
-	//	else
-	//	{
-	//		APIHelper::GetMessageAll(this->GetSafeHwnd(), friendId);
-	//	}
-	//	CString str;
-	//	listFriend.GetText(sel, str); // Lấy nội dung dòng được chọn
-
-	//	
-	//}
-
-
+	
 	if (sel != LB_ERR)
 	{
 		Entities::User userSend = listFriend.GetUser(sel); 
@@ -234,9 +206,11 @@ LRESULT CHomeView::OnResponse(WPARAM wParam, LPARAM lParam)
 			user.fullname = CA2T(tmp.c_str(), CP_UTF8);
 		}
 		if (item.contains("Avatar"))
+		// Co avatar, yeu cau tai avatar
 		{
 			tmp = item["Avatar"];
 			user.avatar = CA2T(tmp.c_str(), CP_UTF8);
+			APIHelper::AutoGetResource(this->GetSafeHwnd(), user.avatar);
 		}
 
 		tmp = item["Username"];
@@ -248,16 +222,24 @@ LRESULT CHomeView::OnResponse(WPARAM wParam, LPARAM lParam)
 	delete pResponse; 
 	return 0;
 }
+void CHomeView::OnDestroy()
+{
+	//OutputDebugString(L"[DEBUG] OnDestroy được gọi\n"); // dòng này thêm vào
+	CDialogEx::OnDestroy();
+	::PostQuitMessage(0);
+}
 void CHomeView::OnClose()
 {
-	CDialogEx::OnClose(); 
-	AfxGetApp()->m_pMainWnd = nullptr;
+	DestroyWindow(); 
+
 }
 BEGIN_MESSAGE_MAP(CHomeView, CDialogEx)
 	ON_LBN_SELCHANGE(1305, &CHomeView::OnSelChangeListFriend)
 	ON_MESSAGE(WM_API_FRIEND, &CHomeView::OnResponse)
 	ON_MESSAGE(WM_INITDATA, &CHomeView::LateInitData)
 	ON_WM_CTLCOLOR()
+	ON_WM_DESTROY()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 // nID bắt đầu từ 1300

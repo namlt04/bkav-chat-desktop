@@ -2,7 +2,6 @@
 #include "FileManager.h"
 #include "json.hpp"
 #include "fstream"
-//sqlite3* FileManager::m_db = nullptr;
 CString FileManager::m_databasePath = _T("");
 CString FileManager::m_configPath = _T("");
 CString FileManager::m_path = _T(""); 
@@ -31,15 +30,15 @@ BOOL FileManager::Init()
 }
 
 
-BOOL FileManager::DefaultConfig() {
+BOOL FileManager::DefaultConfig(std::string username) {
 
 	std::string string_path = std::string(CW2A(FileManager::m_configPath));
 	std::ofstream file(string_path); 
 	nlohmann::json config;
 	config["username"] = "admin";
 	config["password"] = "admin";
-	//config["saveInfo"] = FALSE;  trong json khong su dung BOOL mà sử dụng boolean
 	config["remember"] = false; 
+	config["lastLogin"] = username;
 	file << config.dump();
 	file.close();
 	return TRUE;
@@ -59,7 +58,7 @@ bool FileManager::InitConfig()
 	{
 		// Nếu file chưa được tạo thì tạo file mới
 		// File đã được tạo thì ghi đè
-		FileManager::DefaultConfig();
+		FileManager::DefaultConfig("");
 		return TRUE;
 
 	}
@@ -84,6 +83,11 @@ BOOL FileManager::SaveConfig(CString username, CString password, bool remember)
 {
 	// Luu lai vao file Config  
 	std::string path = CW2A(FileManager::m_configPath);		
+	std::ifstream f(path); 
+	nlohmann::json tmp;
+	f >> tmp;
+	std::string lastLogin = tmp["lastLogin"];
+
 	if (remember)
 	{
 
@@ -94,21 +98,17 @@ BOOL FileManager::SaveConfig(CString username, CString password, bool remember)
 		config["username"] = std::string(CW2A(username)); 
 		config["password"] = std::string(CW2A(password));
 		config["remember"] = true;
+		// Dang nhap thanh cong thi luu lastLogin vao 
+		config["lastLogin"] = std::string(CW2A(username));
 		file << config.dump();
 		file.close();
 	}
 	else
 	{
-		FileManager::DefaultConfig();
+		FileManager::DefaultConfig(std::string(CW2A(username)));
 	}
+	if (lastLogin != std::string(CW2A(username)))
+		return FALSE;
 	return TRUE;
 }
 
-//void FileManager::CloseDatabase()
-//{
-//	if (FileManager::m_db != nullptr)
-//	{
-//		sqlite3_close(m_db);
-//		m_db = nullptr;
-//	}
-//}

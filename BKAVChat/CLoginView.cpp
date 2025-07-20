@@ -53,7 +53,7 @@ END_MESSAGE_MAP()
 CLoginView::CLoginView(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_LOGINVIEW, pParent)
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_hIcon = AfxGetApp()->LoadIcon(IDI_BKAV);
 }
 
 void CLoginView::DoDataExchange(CDataExchange* pDX)
@@ -64,18 +64,19 @@ void CLoginView::DoDataExchange(CDataExchange* pDX)
 	//DDX_Check(pDX , 1106, m_checkRemember);
 }
 
+
 BEGIN_MESSAGE_MAP(CLoginView, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_WM_TIMER()
+	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(1108, &CLoginView::SignUpButtonClicked)
 	ON_BN_CLICKED(1107, &CLoginView::SignInButtonClicked)
 	ON_MESSAGE(WM_API_LOGIN, &CLoginView::OnResponse)
 
 END_MESSAGE_MAP()
-
 
 // CBKAVChatDlg message handlers
 
@@ -387,46 +388,22 @@ void CLoginView::OnTimer(UINT_PTR nIDEvent)
 }
 LRESULT CLoginView::OnResponse(WPARAM wParam, LPARAM  lParam)
 {
-	// Chua thiêt lap UINT WM_LOGIN_RESPONSE 
-	AfxMessageBox(_T("Da nhan")); 
 	std::string* pResponse = reinterpret_cast<std::string*>(lParam);
-	//CString* pResponse = (CString*)lParam; 
-	//CT2A tmp(*pResponse);
-	//std::string str = std::string(tmp);
-
+	
 	nlohmann::json j;
 	j = nlohmann::json::parse(*pResponse);
 	if (j["status"] == 1)
 	{
 		// Luu config
-		FileManager::SaveConfig(m_usernameController, m_passwordController, m_checkRemember);
+		BOOL isDropDB =	FileManager::SaveConfig(m_usernameController, m_passwordController, m_checkRemember);
+		DatabaseManager::GetInstance().Connect(isDropDB); 
+			
 		
 		// Luu token
 		std::string token_str = j["data"]["token"];
 		CString token(CA2T(token_str.c_str())); 
 		GlobalParam::token = token;
 		
-		/* pCHomeView->Create(IDD_HOMEVIEW, AfxGetMainWnd());
-
-		AfxGetApp()->m_pMainWnd = pCHomeView;
-		pCHomeView->ShowWindow(SW_HIDE); */
-		/* if (pCHomeView->Create(IDD_HOMEVIEW, AfxGetMainWnd())) {
-
-			// In ra HWND dưới dạng số thập phân (hoặc hexa)
-			CString str;
-			str.Format(_T("HWND của pCHomeView: 0x%08X"), (UINT)(UINT_PTR)pCHomeView->GetSafeHwnd());
-			AfxMessageBox(str);
-
-			AfxGetApp()->m_pMainWnd = pCHomeView;
-			pCHomeView->InitializeData(); 
-			pCHomeView->ShowWindow(SW_HIDE);
-
-		} */
-
-		//CHomeView* pCHomeView = new CHomeView();
-		//AfxGetApp()->m_pMainWnd = pCHomeView;
-		//EndDialog(0);
-		//pCHomeView->DoModal(); 
 		CDialogEx::OnOK(); 
 	}
 	else

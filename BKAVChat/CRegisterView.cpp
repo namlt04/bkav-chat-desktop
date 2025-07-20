@@ -16,7 +16,7 @@ IMPLEMENT_DYNAMIC(CRegisterView, CDialogEx)
 CRegisterView::CRegisterView(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_REGISTERVIEW, pParent)
 {
-
+	m_hIcon = AfxGetApp()->LoadIconW(IDI_BKAV);
 }
 
 CRegisterView::~CRegisterView()
@@ -51,6 +51,8 @@ BOOL CRegisterView::OnInitDialog() {
 	CDialogEx::OnInitDialog();
 	this->SetWindowTextW(_T("BKAV Chat - Đăng ký"));
 	this->SetWindowPos(NULL, 0, 0, 600, 500, SWP_NOMOVE | SWP_NOZORDER);
+	SetIcon(m_hIcon, TRUE); 
+	SetIcon(m_hIcon, FALSE); 
 	//CRect rectSignUpButton(200, 270, 290, 300);
 
 
@@ -246,13 +248,10 @@ void CRegisterView::OnTimer(UINT_PTR nIDEvent)
 }
 LRESULT CRegisterView::OnResponse(WPARAM wParam, LPARAM lParam)
 {
-	
-	CString* pResponse = (CString*)lParam;
-	CT2A rev(*pResponse); 
-	std::string str = std::string(rev);
+	std::string* pResponse = reinterpret_cast<std::string*>(lParam);
 	nlohmann::json j;
-	j = nlohmann::json::parse(str);
-
+	j = nlohmann::json::parse(*pResponse);
+	
 	if (j["status"] == 0)
 	{
 		accountExist.ShowWindow(SW_SHOW); 

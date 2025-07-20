@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CChatView, CDialogEx)
 CChatView::CChatView(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_CHATVIEW, pParent)
 {
-
+	m_hIcon = AfxGetApp()->LoadIconW(IDI_BKAV);
 }
 
 CChatView::~CChatView()
@@ -32,12 +32,14 @@ BOOL CChatView::OnInitDialog()
 	CDialog::OnInitDialog();
 	this->SetWindowPos(NULL, 0, 0, 800, 600, SWP_NOMOVE | SWP_NOZORDER);
 	this->SetWindowTextW(_T("BKAV Chat - ") + user.showName);
+	SetIcon(m_hIcon, TRUE); 
+	SetIcon(m_hIcon, FALSE); 
 	CRect rClient;
 	GetClientRect(&rClient);
 	UINT width = rClient.Width();
 	UINT height = rClient.Height();
 	m_font.CreateFont(
-		height / 30,                    // Chiều cao font (pixel)
+		height / 20,                    // Chiều cao font (pixel)
 		0,                     // Chiều rộng (0 = tự tính)
 		0, 0,                  // Escapement, Orientation
 		FW_BOLD,               // Đậm
@@ -53,7 +55,7 @@ BOOL CChatView::OnInitDialog()
 	);
 
 	m_fontDownload.CreateFont(
-		height / 30,                    // Chiều cao font (pixel)
+		height / 20,                    // Chiều cao font (pixel)
 		0,                     // Chiều rộng (0 = tự tính)
 		0, 0,                  // Escapement, Orientation
 		FW_BOLD,               // Đậm
@@ -73,139 +75,116 @@ BOOL CChatView::OnInitDialog()
 
 
 
-	CRect rI(0, rLM.bottom, rClient.right - (4 * (height / 12)), rClient.bottom);
+	rInput = CRect(width/12, rLM.bottom, rClient.right - (3 * (height / 12)) - (width / 12) ,rClient.bottom);
+	CRect rI( width / 12, rLM.bottom, rClient.right - (4 * (height / 12)) - ( width / 12), rClient.bottom );
 
 	input.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL, rI, this, 1402);
 	input.SetFont(&m_font);
-	CRect rS(rI.right, rI.top, rI.right + (height / 12),rI.bottom);
-	CRect rE(rS.right, rI.top, rS.right + (height / 12 ), rI.bottom);
-	CRect rImg(rE.right, rI.top, rE.right + (height / 12) , rI.bottom);
-	CRect rF(rImg.right, rI.top, rImg.right + (height / 12 ), rI.bottom);
+	CRect rS(rI.right, rInput.top, rI.right + (height / 12),rInput.bottom);
+	CRect rE(rS.right, rInput.top, rS.right + (height / 12 ), rInput.bottom);
+	CRect rImg(rE.right, rInput.top, rE.right + (height / 12) , rInput.bottom);
+	CRect rF(rImg.right, rInput.top, rImg.right + (height / 12 ), rInput.bottom);
 
 	m_hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME); 
-	m_sendButton.Create(&m_hIcon, rS, this, 1403);
-	m_emojiButton.Create(&m_hIcon, rE, this, 1404);
-	m_imageButton.Create(&m_hIcon, rImg, this, 1405);
-	m_fileButton.Create(&m_hIcon, rF, this, 1406);
+	m_hSend = AfxGetApp()->LoadIconW(IDI_SEND); 
+	m_hAttach = AfxGetApp()->LoadIconW(IDI_ATTACH); 
+	m_hPhoto = AfxGetApp()->LoadIconW(IDI_PHOTO); 
+	m_hEmoji = AfxGetApp()->LoadIconW(IDI_EMOJI); 
 
+	m_sendButton.Create(_T(""),  & m_hSend, rS, this, 1403, 1);
+	m_emojiButton.Create(_T("") , & m_hEmoji, rE, this, 1404, 1);
+	m_imageButton.Create(_T(""),  & m_hPhoto, rImg, this, 1405, 1);
+	m_fileButton.Create(_T(""), & m_hAttach, rF, this, 1406, 1);
+
+
+	//m_list.Create(CRect(10, 10, 500, 150), this, 1234);
+	//m_list.ModifyStyle(0, WS_VISIBLE | WS_CHILD | WS_TABSTOP | WS_HSCROLL | WS_BORDER);
+	m_list.Create(CRect(0, rLM.bottom - 150, width, rLM.bottom ), this, 1234);
 
 	APIHelper::GetMessageFromServer(this->GetSafeHwnd(), user.friendId);
 
+	//emojiPicker.Create(CRect(0, 0, 400, 400), this); 
+	//emojiPicker.ShowWindow(SW_SHOW); 
 	return TRUE;
 }
 void CChatView::OnSendButtonClicked()
 {
 	input.GetWindowText(m_inputController); 
-	AfxMessageBox(m_inputController); 
-	APIHelper::SendMessageTo(this->GetSafeHwnd(), m_inputController);
-
+	APIHelper::SendMessageTo(this->GetSafeHwnd(), m_inputController, m_list.GetFiles());
 	input.SetWindowTextW(_T(""));
+
+	if (m_list.IsWindowVisible())
+		CloseFilePicker(0, 0);
+}
+LRESULT CChatView::CloseFilePicker(WPARAM wParam, LPARAM lParam)
+{	
+	CRect rML; 
+	m_list.GetWindowRect(&rML);
+	CRect rL; 
+	listMessage.GetWindowRect(&rL);
+	listMessage.MoveWindow(CRect(0, 0, rML.Width(), rML.Height() +  rL.Height()));
+	listMessage.UpdateScrollBar(true);
+	m_list.Close(); 
+	return 0;
+	
 }
 void CChatView::OnEmojiButtonClicked()
 {
-	if (m_pEmojiPicker == nullptr)
+	if (pEmojiPicker == nullptr)
 	{
-		m_pEmojiPicker = new CEmojiPicker(this);
-		m_pEmojiPicker->Create(IDD_EMOJIPICKER, this);
+		pEmojiPicker = new CEmojiPicker(this);
+		pEmojiPicker->Create(IDD_EMOJIPICKER, this);
 
 		// Hiển thị tại vị trí phù hợp
 		CRect rcBtn;
 		GetDlgItem(1404)->GetWindowRect(&rcBtn);
-		m_pEmojiPicker->SetWindowPos(NULL, rcBtn.left, rcBtn.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+		pEmojiPicker->SetWindowPos(NULL, rcBtn.left, rcBtn.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 	}
 	else
 	{
-		m_pEmojiPicker->ShowWindow(SW_SHOW);
-		m_pEmojiPicker->SetFocus();
+		pEmojiPicker->ShowWindow(SW_SHOW);
+		pEmojiPicker->SetFocus();
 	}
 }
-void CChatView::EmojiHandle(UINT sel)
+void CChatView::EmojiHandle(CString emoji)
 {
 	input.GetWindowTextW(m_inputController); 
-
-	CString emoji; 
-	switch (sel)
-	{
-	case 1:
-		emoji = _T(":)");
-		break;
-	case 2:
-		emoji = _T(":>");
-		break;
-	case 3:
-		emoji = _T(":D");
-		break;
-	case 4:
-		emoji = _T(":'(");
-		break;
-	case 5:
-		emoji = _T(">:(");
-		break;
-	case 6:
-		emoji = _T(":P");
-		break;
-	case 7:
-		emoji = _T("O_O");
-		break;
-	case 8:
-		emoji = _T(":3");
-		break;
-	case 9:
-		emoji = _T(":-|");
-		break;
-	case 10:
-		emoji = _T("^_^");
-		break;
-	case 11:
-		emoji = _T("T_T");
-		break;
-	case 12:
-		emoji = _T("xD");
-		break;
-	case 13:
-		emoji = _T("<3");
-		break;
-	case 14:
-		emoji = _T(":o");
-		break;
-	case 15:
-		emoji = _T(":v");
-		break;
-	case 16:
-		emoji = _T("-_-");
-		break;
-	default:
-		emoji = _T("");
-		break;
-	}
 	m_inputController += emoji; 
-
 	input.SetWindowTextW(m_inputController); 
 }
 void CChatView::OnImageButtonClicked()
 {
-	LPCTSTR lpszFilter = _T("Image Files (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png|All Files (*.*)|*.*||");
-	CFileDialog dlg(TRUE, NULL, NULL, OFN_FILEMUSTEXIST, lpszFilter, AfxGetMainWnd());
-	if (dlg.DoModal() == IDOK)
-	{
-
-		CString pathname = dlg.GetPathName();
-		GlobalParam::files.push_back(pathname);
-	}
+	CRect r; 
+	GetClientRect(&r); 
+	CRect rListMessage; 
+	listMessage.GetClientRect(&rListMessage); 
+	if (!m_list.IsWindowVisible() )
+		listMessage.MoveWindow(CRect(0,0,r.right, rListMessage.Height() - 150));
+	m_list.ShowWindow(SW_SHOW);
+	listMessage.UpdateScrollBar(true);
+	m_list.BringWindowToTop(); 
+	m_list.AddAttach(true); 
 	
 }
 void CChatView::OnFileButtonClicked()
 {
-	CFileDialog dlg(TRUE);
-	if (dlg.DoModal() == IDOK)
-	{
+	CRect r; 
+	GetClientRect(&r); 
+	CRect rListMessage; 
+	listMessage.GetClientRect(&rListMessage); 
+	if (!m_list.IsWindowVisible() )
+		listMessage.MoveWindow(CRect(0,0,r.right, rListMessage.Height() - 150));
 
-		CString pathname = dlg.GetPathName();
-		GlobalParam::files.push_back(pathname);
-	}
+	m_list.ShowWindow(SW_SHOW); 
+	listMessage.UpdateScrollBar(true);
+	m_list.BringWindowToTop(); 
+	m_list.AddAttach(false); 
+	
 }
 LRESULT CChatView::OnResponseSend(WPARAM wParam, LPARAM lParam)
 {
+	CRect tRect; 
+	listMessage.GetClientRect(tRect); 
 	// Gui tin nhan -> nhan Response 
 	// 1. Phan tich Response thanh List cac message 
 	// 2. Them Message vao LOCAL 
@@ -231,29 +210,31 @@ LRESULT CChatView::OnResponseSend(WPARAM wParam, LPARAM lParam)
 	return 0;
  
 }
-void CChatView::OnSelChange()
+LRESULT CChatView::OnClickDownloadFile(WPARAM wParam, LPARAM lParam)
 {
 
-	int sel = listMessage.GetCurSel(); 
+	//int sel = listMessage.GetCurSel(); 
+	int sel = (int)wParam; 
 	if (sel != LB_ERR)
 	{
-		Entities::Message* message = listMessage.GetMessageAt(sel);
-		if (message->type == 2 || message->type == 1)
+		Entities::Message message = listMessage.GetMessageAtSel(sel);
+		if (message.type == 2 || message.type == 1)
 		{
 			//AfxMessageBox(message->text);
-			CString ext = PathFindExtension(message->content);   // .txt
+			CString ext = PathFindExtension(message.content);   // .txt
 			ext.TrimLeft('.');
-			CFileDialog dlg(FALSE, ext , message->content,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All file (*.*)|*.*||"), this);
+			CFileDialog dlg(FALSE, ext , message.content,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("All file (*.*)|*.*||"), this);
 			if (dlg.DoModal() == IDOK)
 			{
 				CString savePath = dlg.GetPathName();
-				APIHelper::GetResource(this->GetSafeHwnd(), message->link, savePath);
+				APIHelper::GetResource(this->GetSafeHwnd(), message.link, savePath);
 
 			}
 			
 		} 
 			
 	}
+	return 0; 
 }
 
 void CChatView::ReceivedData(Entities::User userReceived )
@@ -380,7 +361,6 @@ void CChatView::SaveMessageIntoCache(std::vector<Entities::Message> vt, bool isC
 	// Problem : khi friendId da ton tai san thi no khong cap nhat lai
 	//CString format;
 	//format.Format(_T("So tin nhan them vao : %d"), vt_allMsg.size());
-	//AfxMessageBox(format);
 	GlobalParam::messages[user.friendId].insert(GlobalParam::messages[user.friendId].end(),  vt_allMsg.begin(), vt_allMsg.end());
 	
 	// neu da ton tai trong cach
@@ -400,15 +380,19 @@ void CChatView::AddItemToListMessage(std::vector<Entities::Message> &vt)
 {
 	for (const Entities::Message& item : vt)
 	{
-		listMessage.AddItem(item);
+		listMessage.PushBackItem(item);
 	}
-	int count = listMessage.GetCount(); 
-	listMessage.SetTopIndex(count - 1);
+	listMessage.SetScrollDown(); 
 }
 void CChatView::OnOK()
 {
 	OnSendButtonClicked(); 
 }
+BOOL CChatView::OnEraseBkgnd(CDC* pDC)
+{
+	return TRUE;
+}
+
 BEGIN_MESSAGE_MAP(CChatView, CDialogEx)
 	ON_BN_CLICKED(1403, &CChatView::OnSendButtonClicked)
 	ON_BN_CLICKED(1404, &CChatView::OnEmojiButtonClicked)
@@ -417,8 +401,10 @@ BEGIN_MESSAGE_MAP(CChatView, CDialogEx)
 	ON_MESSAGE(WM_RESPONSE_ALL_MSG, &CChatView::OnResponseGetAll)
 	ON_MESSAGE(WM_RESPONSE_LAST_MSG, &CChatView::OnResponseGetLast)
 	ON_MESSAGE(WM_API_SEND, &CChatView::OnResponseSend)
+	ON_WM_ERASEBKGND()
+	ON_MESSAGE(WM_USER + 800, &CChatView::OnClickDownloadFile)
+	ON_MESSAGE(WM_USER + 500, &CChatView::CloseFilePicker) 
 
-	ON_LBN_SELCHANGE(1401, &CChatView::OnSelChange)
 END_MESSAGE_MAP()
 
 

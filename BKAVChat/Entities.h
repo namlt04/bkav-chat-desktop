@@ -25,5 +25,16 @@ namespace Entities
 		UINT width = 0; 
 		UINT height = 0; 
 		UINT messageType; 
+		UINT isSend = 0; 
+	};
+
+	struct Attach
+	{
+		CString type;
+		CString path;
+		CString name; 
+		UINT width; 
+		UINT height;
+		
 	};
 }

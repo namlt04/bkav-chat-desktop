@@ -56,7 +56,7 @@ BOOL CListFriend::Create(const CRect& rect, CWnd* pParent, UINT height,  UINT nI
 void CListFriend::AddItem(Entities::User user)
 {
 	if (user.avatar.IsEmpty()) 
-		user.hIcon = AfxGetApp()->LoadIconW(IDR_MAINFRAME); 
+		user.hIcon = AfxGetApp()->LoadIconW(IDI_AVATAR); 
 	CString showName = user.fullname.IsEmpty() ? user.username : user.fullname;
 	user.showName = showName;
 	vt.push_back(user); 
@@ -151,4 +151,9 @@ LRESULT CListFriend::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 Entities::User CListFriend::GetUser(int nIndex)
 {
 	return vt[nIndex]; 
+}
+
+BOOL CListFriend::OnEraseBkgnd(CDC* pDC)
+{
+	return TRUE;
 }

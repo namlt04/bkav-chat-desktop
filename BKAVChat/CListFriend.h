@@ -20,12 +20,12 @@ protected:
     afx_msg void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
     afx_msg LRESULT OnMouseLeave(WPARAM wParam, LPARAM lParam);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     bool m_isTracking = false;
     int m_hoverItem = -1; 
     COLORREF m_colorCurrent;
     COLORREF m_colorNormal = RGB(255, 255, 255);
     COLORREF m_colorPressed = RGB(28, 127, 217);
-
 
     CFont m_fontName; 
     CFont m_fontContent; 
