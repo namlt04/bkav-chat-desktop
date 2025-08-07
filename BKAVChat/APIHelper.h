@@ -21,7 +21,7 @@ struct APIRequest {
 
 	APIRequest(
 		const CString& m = _T("POST"),
-		const CString& h = _T("localhost"),
+		const CString& h = _T("30.30.30.85"),
 		const CString& p = _T("/api"),
 		INTERNET_PORT pt = 8888,
 		const CString& hdr = _T(""),
